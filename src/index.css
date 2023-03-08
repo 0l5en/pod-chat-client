@@ -1,0 +1,106 @@
+:root {
+  --bs-primary: #9d7aff;
+  --bs-primary-rgb: 124, 44, 255;
+  --bs-secondary: #C9D6DF;
+  --bs-success: #005c05;
+  --bs-danger: #b9414d;
+  --bs-info: #2a79a7;
+  --bs-info-rgb: 42, 121, 167;
+  --bs-warning: #db9b3b;
+  --bs-warning-rgb: 219, 155, 59;
+  --bs-light: #FAFAFA;
+  --bs-dark: #4e4e4e;
+  --bs-white: #FFFFFF;
+  --bs-link-color: #9d7aff;
+  --bs-link-hover-color: #6941d8;
+}
+
+.btn-link {
+  --bs-btn-focus-shadow-rgb: 185, 160, 253;
+}
+
+.btn-primary {
+  --bs-btn-bg: #9d7aff;
+  --bs-btn-border-color: #9d7aff;
+  --bs-btn-hover-bg: #6941d8;
+  --bs-btn-hover-border-color: #6941d8;
+  --bs-btn-active-bg: #6941d8;
+  --bs-btn-active-border-color: #6941d8;
+  --bs-btn-disabled-bg: #d8caff;
+  --bs-btn-disabled-border-color: #d8caff;
+}
+
+.btn-outline-primary {
+  --bs-btn-color: #6941d8;
+  --bs-btn-border-color: #9d7aff;
+  --bs-btn-hover-bg: #6941d8;
+  --bs-btn-hover-border-color: #6941d8;
+  --bs-btn-active-bg: #6941d8;
+  --bs-btn-active-border-color: #6941d8;
+  --bs-btn-disabled-bg: #d8caff;
+  --bs-btn-disabled-border-color: #d8caff;
+}
+
+.dropdown-menu {
+  --bs-dropdown-link-active-bg: #9d7aff;
+}
+
+.list-group {
+  --bs-list-group-focus-border-color: #6941d8;
+  --bs-list-group-active-bg: #6941d8;
+  --bs-list-group-active-border-color: #6941d8;
+}
+
+.list-group-item {
+  --bs-list-group-item-padding-x: 0.5rem;
+}
+
+.form-control:focus {
+  border-color: #9d7aff;
+  box-shadow: 0 0 0 .1rem rgba(157, 122, 255, 0.12)
+}
+
+.form-control.is-invalid:focus {
+  box-shadow: 0 0 0 .1rem rgba(220, 53, 69, .12);
+}
+
+.form-switch>.form-check-input:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 .1rem rgba(157, 122, 255, 0.12);
+}
+
+.form-switch>.form-check-input:checked {
+  border-color: var(--bs-primary);
+  background-color: var(--bs-primary);
+}
+
+.form-switch>.form-check-input:focus,
+.form-switch>.form-check-input:not(.form-check-input:checked) {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23d8caff'/%3e%3c/svg%3e");
+}
+
+.form-switch>.form-check-input:focus,
+.form-switch>.form-check-input:checked {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='white'/%3e%3c/svg%3e");
+}
+
+.progress {
+  --bs-progress-height: 0.3rem;
+  --bs-progress-bar-bg: #6941d8;
+}
+
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
