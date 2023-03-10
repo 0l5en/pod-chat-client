@@ -126,8 +126,28 @@ Using the example above, Bob's file would look like this:
 ```
 The file closely matches the Solid LongChat sample. Particular attention is paid to the participation predicate `dct:references`. As described above, the application can only find messages for the currently logged-in user in their pod. The messages of the other participants are in the respective pods of the participants. In order to be able to know where to find this data, the application needs to know which chat belongs to which participant. This is exactly what the additional predicate `dct:references` is for. This predicate is set as soon as the respective chat of the participant is known, e.g. after a chat invitation has been accepted.
 
+## Chat discovery
+The application uses the private type index to recognize the chats. At the very beginning, all chat instances are processed in the type index. When a new chat is created, a new triple is written to the private type index.
+The following example shows Bob's private type index with exactly one chat.
+
+```
+# https://bob.pod/settings/privateTypeIndex.ttl
+@prefix : <#>.
+@prefix meeting: <http://www.w3.org/ns/pim/meeting#>.
+@prefix solid: <http://www.w3.org/ns/solid/terms#>.
+@prefix index: </pod-chat.com/1234/index.ttl#>.
+@prefix terms: <https://www.w3.org/ns/solid/terms#>.
+
+<> a terms:TypeIndex, terms:UnlistedDocument.
+
+:1
+    a solid:TypeRegistration;
+    solid:forClass meeting:LongChat;
+    solid:instance index:this.
+```
+
 ## Chat display
-Suppose Bob has successfully logged into pod-chat.com. When he selects the chat with Alice, the following things are done:
+Suppose Bob has successfully logged into pod-chat.com. If he selects the chat with Alice discovered in the private type index, the following things are done:
 
 1. The index.ttl of the concerned chat is loaded from Bob's pod.
 2. The application will find the reference to Alice's chat and will start loading the messages of the current day from Alice's pod
