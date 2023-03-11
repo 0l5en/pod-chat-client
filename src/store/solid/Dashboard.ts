@@ -1,4 +1,4 @@
-import { AS, DCTERMS, LDP, RDF } from "@inrupt/vocab-common-rdf";
+import { AS, DCTERMS, LDP, POSIX, RDF } from "@inrupt/vocab-common-rdf";
 import { Chat, Dashboard, NotificationType, Profile, SolidNotification } from "../../types";
 import { deleteInviter, loadInviter } from "./ApplicationApi";
 import { loadChat } from "./Chat";
@@ -27,7 +27,7 @@ export const loadDashboardContent = async (profileId: string, onProgress: (progr
     onProgress(50);
 
     const chatNotifications = await notificationsFromProfileInbox({ profile, onProgress });
-    const dashboard: Dashboard = { profile, chats, solidNotifications: chatNotifications };
+    const dashboard: Dashboard = { profile, chats, solidNotifications: chatNotifications, spaceUsage: { asyncState: { pending: false } } };
 
     // check if called via invitation link
     const inviter = await loadInviter();
@@ -45,6 +45,38 @@ export const loadDashboardContent = async (profileId: string, onProgress: (progr
     }
 
     return dashboard;
+}
+
+export const calculateSpaceUsage = async (containerId: string): Promise<number> => {
+    try {
+        const container = rdfStore.cache.sym(containerId);
+        const containes = rdfStore.cache.sym(LDP.contains);
+
+        await rdfStore.fetcher.load(containerId);
+
+        // collect values from children
+        const children = rdfStore.cache.each(container, containes, undefined, container)
+            .reduce((acc, containedId) => {
+                if (rdfStore.cache.holds(containedId, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(LDP.Container), container)) {
+                    return [...acc, { subject: containedId.value }];
+                }
+                const size = rdfStore.cache.any(rdfStore.cache.sym(containedId.value), rdfStore.cache.sym(POSIX.size), undefined, container);
+                if (size && !isNaN(+Number(size.value))) {
+                    return [...acc, { subject: containedId.value, size: Number(size.value) }]
+                }
+
+                return acc;
+            }, [] as Array<{ subject: string, size?: number }>);
+
+        // descent into child container's
+        const childResults = await Promise.all(children.reduce((acc, child) => child.size ? acc : [...acc, calculateSpaceUsage(child.subject)], [] as Array<Promise<number>>));
+
+
+        // summarise results
+        return childResults.reduce((acc, childResult) => acc + childResult, children.reduce((acc, child) => child.size ? acc + child.size : acc, 0));
+    } catch (error) {
+        return 0;
+    }
 }
 
 export const notificationsFromProfileInbox = async ({ profile, onProgress, force = false }: { profile: Profile, onProgress?: (progress: number) => void, force?: boolean }): Promise<SolidNotification[]> => {
@@ -317,4 +349,36 @@ function getChatMessageNotification(notificationId: string, rdfType: string, con
         return acc;
     }, [] as Array<SolidNotification>
     ).pop();
+}
+
+/**
+ * Format bytes as human-readable text.
+ * 
+ * @param bytes Number of bytes.
+ * @param si True to use metric (SI) units, aka powers of 1000. False to use 
+ *           binary (IEC), aka powers of 1024.
+ * @param dp Number of decimal places to display.
+ * 
+ * @return Formatted string.
+ */
+export function humanFileSize(bytes: number, si = false, dp = 1) {
+    const thresh = si ? 1000 : 1024;
+
+    if (Math.abs(bytes) < thresh) {
+        return bytes + ' B';
+    }
+
+    const units = si
+        ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+        : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    let u = -1;
+    const r = 10 ** dp;
+
+    do {
+        bytes /= thresh;
+        ++u;
+    } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
+
+
+    return bytes.toFixed(dp) + ' ' + units[u];
 }

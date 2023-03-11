@@ -2,7 +2,7 @@ import { createAsyncThunk, createSelector, createSlice, PayloadAction } from "@r
 import { AppDispatch, AppState } from ".";
 import { Chat, Dashboard, DashboardState, NotificationType, SolidNotification } from "../types";
 import { setParticipantReferences } from "./solid/Chat";
-import { findChatIdByParticipantReference, loadDashboardContent } from "./solid/Dashboard";
+import { calculateSpaceUsage as calculateSolidSpaceUsage, findChatIdByParticipantReference, humanFileSize, loadDashboardContent } from "./solid/Dashboard";
 import { acceptNotifications } from "./solid/Notification";
 
 export const loadDashboard = createAsyncThunk<Dashboard, { profileId: string, onProgress: (progress: number) => void }, { rejectValue: string }>(
@@ -46,6 +46,17 @@ export const updateParticipantReferences = createAsyncThunk<void, { chatId: stri
                     await setParticipantReferences(chatId, references);
                 }
             }
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : "" + error);
+        }
+    }
+);
+
+export const calculateSpaceUsage = createAsyncThunk<number, string, { rejectValue: string }>(
+    'dashboard/calculateSpaceUsage',
+    async (storageId, { rejectWithValue }) => {
+        try {
+            return await calculateSolidSpaceUsage(storageId);
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : "" + error);
         }
@@ -100,7 +111,12 @@ const slice = createSlice({
             state.asyncState.error = undefined;
         }).addCase(loadDashboard.fulfilled, (state, action) => {
             state.asyncState.pending = false;
-            state.dashboard = action.payload;
+            if (state.dashboard) {
+                state.dashboard = { ...action.payload, spaceUsage: state.dashboard.spaceUsage }
+            } else {
+                state.dashboard = action.payload;
+            }
+
         }).addCase(loadDashboard.rejected, (state, action) => {
             state.asyncState.pending = false;
             state.asyncState.error = action.payload;
@@ -123,7 +139,26 @@ const slice = createSlice({
                     }
                 });
             }
-        })
+        });
+
+        builder.addCase(calculateSpaceUsage.pending, state => {
+            const dashboard = selectDashboard(state);
+            if (dashboard) {
+                dashboard.spaceUsage.asyncState.pending = true;
+            }
+        }).addCase(calculateSpaceUsage.fulfilled, (state, action) => {
+            const dashboard = selectDashboard(state);
+            if (dashboard) {
+                dashboard.spaceUsage.bytes = action.payload;
+                dashboard.spaceUsage.asyncState.pending = false;
+            }
+        }).addCase(calculateSpaceUsage.rejected, (state, action) => {
+            const dashboard = selectDashboard(state);
+            if (dashboard) {
+                dashboard.spaceUsage.asyncState.error = action.payload;
+                dashboard.spaceUsage.asyncState.pending = false;
+            }
+        });
     }
 });
 
@@ -190,4 +225,6 @@ export const makeSelectParticipantChatIds = () => createSelector(
         : []
 );
 
-
+export const selectSpaceUsageCounterPending = createSelector([selectDashboard], dashboard => dashboard ? dashboard.spaceUsage.asyncState.pending : false);
+export const selectSpaceUsageCounterBytes = createSelector([selectDashboard], dashboard => dashboard?.spaceUsage.bytes ? humanFileSize(dashboard.spaceUsage.bytes, true) : humanFileSize(0));
+export const selectSpaceUsageCounterError = createSelector([selectDashboard], dashboard => dashboard ? dashboard.spaceUsage.asyncState.error : undefined);

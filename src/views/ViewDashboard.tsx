@@ -5,7 +5,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { useAppDispatch } from "../store";
 import { useDashboard } from "../store/DashboardHook";
-import { loadDashboard, setChatSearchFilter } from "../store/DashboardSlice";
+import { calculateSpaceUsage, loadDashboard, setChatSearchFilter } from "../store/DashboardSlice";
 import ChatSelector from "./components/ChatSelector";
 import ScrollPanel from "./components/ScrollPanel";
 import ShareMenuDropdown from "./components/ShareMenuDropdown";
@@ -54,16 +54,24 @@ const ChatSelectorHeader = () => {
 const ViewDashboard = ({ chatPath, webid }: { chatPath: string, webid: string }) => {
 
     const [progress, setProgress] = useState<number>(0);
-    const { pending } = useDashboard();
+    const { pending, dashboard } = useDashboard();
     const dispatch = useAppDispatch();
-    const ref = useRef<boolean>(false);
+    const refLoadDashboard = useRef<boolean>(false);
+    const refCalculateSpaceUsage = useRef<boolean>(false);
 
     useEffect(() => {
-        if (!ref.current) {
+        if (!refLoadDashboard.current) {
             dispatch(loadDashboard({ profileId: webid, onProgress: (progress) => { setProgress(progress) } }));
-            ref.current = true;
+            refLoadDashboard.current = true;
         }
     }, [dispatch, webid]);
+
+    useEffect(() => {
+        if (!refCalculateSpaceUsage.current && dashboard) {
+            dispatch(calculateSpaceUsage(dashboard.profile.storageId));
+            refCalculateSpaceUsage.current = true;
+        }
+    }, [dispatch, dashboard]);
 
     return (
         <>

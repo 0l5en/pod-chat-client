@@ -13,7 +13,10 @@ import {
     selectDashboardChats,
     selectDashboardInviter,
     selectError,
-    selectPending
+    selectPending,
+    selectSpaceUsageCounterBytes,
+    selectSpaceUsageCounterError,
+    selectSpaceUsageCounterPending
 } from "./DashboardSlice";
 
 export const useDashboard = () => {
@@ -26,6 +29,14 @@ export const useDashboard = () => {
     const dashboardInviter = useSelector((state: AppState) => selectDashboardInviter(state.dashboardState));
 
     return { pending, error, dashboard, chats, chatMessageAddNotificationGroups, chatSearchFilter, dashboardInviter };
+}
+
+export const useSpaceUsageCounter = () => {
+    const pending = useSelector((state: AppState) => selectSpaceUsageCounterPending(state.dashboardState));
+    const error = useSelector((state: AppState) => selectSpaceUsageCounterError(state.dashboardState));
+    const bytes = useSelector((state: AppState) => selectSpaceUsageCounterBytes(state.dashboardState));
+
+    return { pending, error, bytes };
 }
 
 export const useChat = ({ chatId }: { chatId: string }) => {
