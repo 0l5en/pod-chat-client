@@ -2,8 +2,9 @@ import { createAsyncThunk, createSelector, createSlice, PayloadAction } from "@r
 import { AppDispatch, AppState } from ".";
 import { Chat, Dashboard, DashboardState, NotificationType, SolidNotification } from "../types";
 import { setParticipantReferences } from "./solid/Chat";
-import { calculateSpaceUsage as calculateSolidSpaceUsage, findChatIdByParticipantReference, humanFileSize, loadDashboardContent } from "./solid/Dashboard";
+import { findChatIdByParticipantReference, loadDashboardContent } from "./solid/Dashboard";
 import { acceptNotifications } from "./solid/Notification";
+import { calculateSpaceUsage as calculateSolidSpaceUsage } from "./solid/Storage";
 
 export const loadDashboard = createAsyncThunk<Dashboard, { profileId: string, onProgress: (progress: number) => void }, { rejectValue: string }>(
     "dashboard/load",
@@ -52,11 +53,12 @@ export const updateParticipantReferences = createAsyncThunk<void, { chatId: stri
     }
 );
 
-export const calculateSpaceUsage = createAsyncThunk<number, string, { rejectValue: string }>(
+export const calculateSpaceUsage = createAsyncThunk<void, { storageId: string, onFileSize: (bytes: number) => void, onEnd: () => void }, { rejectValue: string }>(
     'dashboard/calculateSpaceUsage',
-    async (storageId, { rejectWithValue }) => {
+    async ({ storageId, onFileSize, onEnd }, { rejectWithValue }) => {
         try {
-            return await calculateSolidSpaceUsage(storageId);
+            await calculateSolidSpaceUsage(storageId, onFileSize);
+            onEnd();
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : "" + error);
         }
@@ -111,12 +113,7 @@ const slice = createSlice({
             state.asyncState.error = undefined;
         }).addCase(loadDashboard.fulfilled, (state, action) => {
             state.asyncState.pending = false;
-            if (state.dashboard) {
-                state.dashboard = { ...action.payload, spaceUsage: state.dashboard.spaceUsage }
-            } else {
-                state.dashboard = action.payload;
-            }
-
+            state.dashboard = action.payload;
         }).addCase(loadDashboard.rejected, (state, action) => {
             state.asyncState.pending = false;
             state.asyncState.error = action.payload;
@@ -138,25 +135,6 @@ const slice = createSlice({
                         participant.chatId = reference.participantChatId;
                     }
                 });
-            }
-        });
-
-        builder.addCase(calculateSpaceUsage.pending, state => {
-            const dashboard = selectDashboard(state);
-            if (dashboard) {
-                dashboard.spaceUsage.asyncState.pending = true;
-            }
-        }).addCase(calculateSpaceUsage.fulfilled, (state, action) => {
-            const dashboard = selectDashboard(state);
-            if (dashboard) {
-                dashboard.spaceUsage.bytes = action.payload;
-                dashboard.spaceUsage.asyncState.pending = false;
-            }
-        }).addCase(calculateSpaceUsage.rejected, (state, action) => {
-            const dashboard = selectDashboard(state);
-            if (dashboard) {
-                dashboard.spaceUsage.asyncState.error = action.payload;
-                dashboard.spaceUsage.asyncState.pending = false;
             }
         });
     }
@@ -224,7 +202,3 @@ export const makeSelectParticipantChatIds = () => createSelector(
         ? chat.participants.reduce((acc, participant) => participant.chatId ? [...acc, participant.chatId] : acc, [] as Array<string>)
         : []
 );
-
-export const selectSpaceUsageCounterPending = createSelector([selectDashboard], dashboard => dashboard ? dashboard.spaceUsage.asyncState.pending : false);
-export const selectSpaceUsageCounterBytes = createSelector([selectDashboard], dashboard => dashboard?.spaceUsage.bytes ? humanFileSize(dashboard.spaceUsage.bytes, true) : humanFileSize(0));
-export const selectSpaceUsageCounterError = createSelector([selectDashboard], dashboard => dashboard ? dashboard.spaceUsage.asyncState.error : undefined);

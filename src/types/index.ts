@@ -29,10 +29,6 @@ export type Dashboard = {
     chats: Chat[];
     solidNotifications: SolidNotification[];
     inviter?: Profile;
-    spaceUsage: {
-        asyncState: AsyncState;
-        bytes?: number;
-    }
 }
 
 export type ProfilesState = {

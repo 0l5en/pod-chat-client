@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSelector } from "react-redux";
-import { AppState } from ".";
+import { AppState, useAppDispatch } from ".";
 import {
+    calculateSpaceUsage as calculateSolidSpaceUsage,
     makeSelectChatMessageAddNotificationsForReferenceId,
     makeSelectChatNotificationsForReferenceId,
     makeSelectChatNotificationsForTargetId,
@@ -13,10 +14,7 @@ import {
     selectDashboardChats,
     selectDashboardInviter,
     selectError,
-    selectPending,
-    selectSpaceUsageCounterBytes,
-    selectSpaceUsageCounterError,
-    selectSpaceUsageCounterPending
+    selectPending
 } from "./DashboardSlice";
 
 export const useDashboard = () => {
@@ -32,11 +30,18 @@ export const useDashboard = () => {
 }
 
 export const useSpaceUsageCounter = () => {
-    const pending = useSelector((state: AppState) => selectSpaceUsageCounterPending(state.dashboardState));
-    const error = useSelector((state: AppState) => selectSpaceUsageCounterError(state.dashboardState));
-    const bytes = useSelector((state: AppState) => selectSpaceUsageCounterBytes(state.dashboardState));
-
-    return { pending, error, bytes };
+    const [summ, setSumm] = useState(0);
+    const [end, setEnd] = useState(false);
+    const dispatch = useAppDispatch();
+    const { dashboard } = useDashboard();
+    const summHumanReadable = useMemo(() => humanFileSize(summ), [summ]);
+    const addFileSize = (bytes: number) => { setSumm((s) => s + bytes); };
+    const calculateSpaceUsage = () => {
+        if (dashboard) {
+            dispatch(calculateSolidSpaceUsage({ storageId: dashboard.profile.storageId, onFileSize: addFileSize, onEnd: () => setEnd(true) }));
+        }
+    };
+    return { summHumanReadable, calculateSpaceUsage, dashboard, end };
 }
 
 export const useChat = ({ chatId }: { chatId: string }) => {
@@ -57,4 +62,40 @@ export const useNotifications = ({ chatId }: { chatId?: string }) => {
     const selectChatNotificationsForTargetId = useMemo(() => makeSelectChatNotificationsForTargetId(), []);
     const chatNotificationsForTargetId = useSelector((state: AppState) => selectChatNotificationsForTargetId(state.dashboardState, chatId));
     return { chatNotificationsForTargetId };
+}
+
+/**
+ * Format bytes as human-readable text.
+ * 
+ * @param bytes Number of bytes.
+ * @param si True to use metric (SI) units, aka powers of 1000. False to use 
+ *           binary (IEC), aka powers of 1024.
+ * @param dp Number of decimal places to display.
+ * 
+ * @return Formatted string.
+ */
+function humanFileSize(bytes: number, si = false, dp = 1) {
+    if (bytes === 0) {
+        return '';
+    }
+
+    const thresh = si ? 1000 : 1024;
+
+    if (Math.abs(bytes) < thresh) {
+        return bytes + ' B';
+    }
+
+    const units = si
+        ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+        : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+    let u = -1;
+    const r = 10 ** dp;
+
+    do {
+        bytes /= thresh;
+        ++u;
+    } while (Math.round(Math.abs(bytes) * r) / r >= thresh && u < units.length - 1);
+
+
+    return bytes.toFixed(dp) + ' ' + units[u];
 }

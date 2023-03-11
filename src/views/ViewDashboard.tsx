@@ -5,7 +5,7 @@ import { Outlet, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { useAppDispatch } from "../store";
 import { useDashboard } from "../store/DashboardHook";
-import { calculateSpaceUsage, loadDashboard, setChatSearchFilter } from "../store/DashboardSlice";
+import { loadDashboard, setChatSearchFilter } from "../store/DashboardSlice";
 import ChatSelector from "./components/ChatSelector";
 import ScrollPanel from "./components/ScrollPanel";
 import ShareMenuDropdown from "./components/ShareMenuDropdown";
@@ -54,10 +54,9 @@ const ChatSelectorHeader = () => {
 const ViewDashboard = ({ chatPath, webid }: { chatPath: string, webid: string }) => {
 
     const [progress, setProgress] = useState<number>(0);
-    const { pending, dashboard } = useDashboard();
+    const { pending } = useDashboard();
     const dispatch = useAppDispatch();
     const refLoadDashboard = useRef<boolean>(false);
-    const refCalculateSpaceUsage = useRef<boolean>(false);
 
     useEffect(() => {
         if (!refLoadDashboard.current) {
@@ -65,13 +64,6 @@ const ViewDashboard = ({ chatPath, webid }: { chatPath: string, webid: string })
             refLoadDashboard.current = true;
         }
     }, [dispatch, webid]);
-
-    useEffect(() => {
-        if (!refCalculateSpaceUsage.current && dashboard) {
-            dispatch(calculateSpaceUsage(dashboard.profile.storageId));
-            refCalculateSpaceUsage.current = true;
-        }
-    }, [dispatch, dashboard]);
 
     return (
         <>
