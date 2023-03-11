@@ -4,6 +4,7 @@ import { Chat, Dashboard, DashboardState, NotificationType, SolidNotification } 
 import { setParticipantReferences } from "./solid/Chat";
 import { findChatIdByParticipantReference, loadDashboardContent } from "./solid/Dashboard";
 import { acceptNotifications } from "./solid/Notification";
+import { calculateSpaceUsage as calculateSolidSpaceUsage } from "./solid/Storage";
 
 export const loadDashboard = createAsyncThunk<Dashboard, { profileId: string, onProgress: (progress: number) => void }, { rejectValue: string }>(
     "dashboard/load",
@@ -46,6 +47,18 @@ export const updateParticipantReferences = createAsyncThunk<void, { chatId: stri
                     await setParticipantReferences(chatId, references);
                 }
             }
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : "" + error);
+        }
+    }
+);
+
+export const calculateSpaceUsage = createAsyncThunk<void, { storageId: string, onFileSize: (bytes: number) => void, onEnd: () => void }, { rejectValue: string }>(
+    'dashboard/calculateSpaceUsage',
+    async ({ storageId, onFileSize, onEnd }, { rejectWithValue }) => {
+        try {
+            await calculateSolidSpaceUsage(storageId, onFileSize);
+            onEnd();
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : "" + error);
         }
@@ -123,7 +136,7 @@ const slice = createSlice({
                     }
                 });
             }
-        })
+        });
     }
 });
 
@@ -189,5 +202,3 @@ export const makeSelectParticipantChatIds = () => createSelector(
         ? chat.participants.reduce((acc, participant) => participant.chatId ? [...acc, participant.chatId] : acc, [] as Array<string>)
         : []
 );
-
-

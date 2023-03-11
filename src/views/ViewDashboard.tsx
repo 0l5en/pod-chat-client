@@ -56,12 +56,12 @@ const ViewDashboard = ({ chatPath, webid }: { chatPath: string, webid: string })
     const [progress, setProgress] = useState<number>(0);
     const { pending } = useDashboard();
     const dispatch = useAppDispatch();
-    const ref = useRef<boolean>(false);
+    const refLoadDashboard = useRef<boolean>(false);
 
     useEffect(() => {
-        if (!ref.current) {
+        if (!refLoadDashboard.current) {
             dispatch(loadDashboard({ profileId: webid, onProgress: (progress) => { setProgress(progress) } }));
-            ref.current = true;
+            refLoadDashboard.current = true;
         }
     }, [dispatch, webid]);
 
