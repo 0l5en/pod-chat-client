@@ -88,7 +88,7 @@ ind:this
 ## Chat
 An index.ttl file is created for each chat just below the chat directory.
 Among other things, this file is required to find out which chats have to be merged in order to be able to display the messages of all chat participants.  
-Using the example above, Bob's file would look like this:
+Using the example above, Bob's file would look like this: 
 ```
 @prefix : <#>.
 @prefix cal: <http://www.w3.org/2002/12/cal/ical#>.
