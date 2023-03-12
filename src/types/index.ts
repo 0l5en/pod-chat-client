@@ -98,7 +98,7 @@ export type ChatMessage = {
     created: number;
     content: string;
     maker: string;
-    trusted?: boolean;
+    verificationStatus: 'NOT_VERIFIED' | 'VERIFYING' | 'TRUSTED' | 'INVALID_SIGNATURE' | 'NO_SIGNATURE' | 'ERROR';
 }
 
 export type ChatMessageLocation = {

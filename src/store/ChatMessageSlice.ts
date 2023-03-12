@@ -1,9 +1,9 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AppState } from ".";
-import { addDay, ChatMessageResource, ChatMessageResult, ChatMessageSearchResult, ChatMessageState, locationComparator, locationFromDate, SolidNotification } from "../types";
-import { makeSelectMessageResource, selectLocation, selectResultForChatId } from "./ChatMessageSelector";
+import { addDay, ChatMessage, ChatMessageResource, ChatMessageResult, ChatMessageSearchResult, ChatMessageState, locationComparator, locationFromDate, SolidNotification } from "../types";
+import { makeSelectMessage, makeSelectMessageResource, selectLocation, selectResultForChatId } from "./ChatMessageSelector";
 import { removeHashFromUrl } from "./solid/Constants";
-import { createChatMessageResource, getChatMessageResource, loadChatMessageResource, loadMessagesForChats, locationFromMessageResourceUrl } from "./solid/Message";
+import { createChatMessageResource, getChatMessageResource, loadChatMessageResource, loadMessagesForChats, locationFromMessageResourceUrl, verifyChatMessage as verifySolidChatMessage } from "./solid/Message";
 
 const initialState: ChatMessageState = {
     results: [],
@@ -82,6 +82,27 @@ const slice = createSlice({
         }).addCase(loadNextResult.rejected, (state, action) => {
             loadNextResultRejected(state, action.meta.arg.chatId, action.payload);
         });
+
+        /*
+         * Reducer verifyChatMessage
+         */
+        const selectMessage = makeSelectMessage();
+        builder.addCase(verifyChatMessage.pending, (state, action) => {
+            const message = selectMessage(state, action.meta.arg);
+            if (message) {
+                message.verificationStatus = 'VERIFYING';
+            }
+        }).addCase(verifyChatMessage.fulfilled, (state, action) => {
+            const message = selectMessage(state, action.meta.arg);
+            if (message) {
+                message.verificationStatus = action.payload.verificationStatus;
+            }
+        }).addCase(verifyChatMessage.rejected, (state, action) => {
+            const message = selectMessage(state, action.meta.arg);
+            if (message) {
+                message.verificationStatus = 'ERROR';
+            }
+        })
     }
 });
 
@@ -140,6 +161,22 @@ export const completeChatMessageAddNotifications = createAsyncThunk<ChatMessageS
                 }
             }
             return result;
+        } catch (error) {
+            return rejectWithValue(error instanceof Error ? error.message : error + '');
+        }
+    }
+);
+
+export const verifyChatMessage = createAsyncThunk<ChatMessage, { chatId: string, messageId: string }, { rejectValue: string, state: AppState }>(
+    'chatMessage/verifyMessage',
+    async ({ chatId, messageId }, { getState, rejectWithValue }) => {
+        try {
+            const state = getState().chatMessageState;
+            const message = makeSelectMessage()(state, { chatId, messageId });
+            if (message) {
+                return await verifySolidChatMessage(message);
+            }
+            return rejectWithValue('no message found for verification');
         } catch (error) {
             return rejectWithValue(error instanceof Error ? error.message : error + '');
         }

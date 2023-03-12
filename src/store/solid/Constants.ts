@@ -80,3 +80,8 @@ export const CERT = {
     exponent: CERT_NS + 'exponent',
 }
 
+const W3ID_SECURITY_NS = 'https://w3id.org/security#'
+export const W3ID_SECURITY = {
+    proof: W3ID_SECURITY_NS + 'proof'
+}
+

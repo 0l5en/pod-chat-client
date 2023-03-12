@@ -70,7 +70,7 @@ For example, if Bob writes the first message for Alice on Sunday 1/1/2000 at 1am
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix c: </profile/card#>.
 @prefix ind: <../../../index.ttl#>.
-@prefix podchat: <https://www.pod-chat.com/>.
+@prefix w3id: <https://w3id.org/security#>.
 
 # podchat:signature has been shortened for better readability
 :msg-1af45c15-1bed-4b95-aa92-d075a321cf75
@@ -78,7 +78,7 @@ For example, if Bob writes the first message for Alice on Sunday 1/1/2000 at 1am
     sioc:content
         "a message from Bob";
     foaf:maker c:me;
-    podchat:signature
+    w3id:proof
         "HE8ojizpNIcCQYqp73...".
 ind:this
     wf:message
@@ -88,7 +88,7 @@ ind:this
 ## Chat
 An index.ttl file is created for each chat just below the chat directory.
 Among other things, this file is required to find out which chats have to be merged in order to be able to display the messages of all chat participants.  
-Using the example above, Bob's file would look like this:
+Using the example above, Bob's file would look like this: 
 ```
 @prefix : <#>.
 @prefix cal: <http://www.w3.org/2002/12/cal/ical#>.
