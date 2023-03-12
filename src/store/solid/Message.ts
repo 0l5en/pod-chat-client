@@ -199,8 +199,6 @@ export const verifyChatMessage = async (message: ChatMessage): Promise<ChatMessa
         return await verifyPodchatSignature(message);
     }
     try {
-        const messageVerificationStr = buildMessageVerificationStr(message);
-        console.log('verify message ', { messageId: message.id, messageVerificationStr });
         const trusted = await verifyMessage(message.maker, buildMessageVerificationStr(message), w3idSignature);
         return { ...message, verificationStatus: trusted === true ? 'TRUSTED' : 'INVALID_SIGNATURE' };
     } catch (error) {
@@ -217,8 +215,6 @@ const verifyPodchatSignature = async (message: ChatMessage): Promise<ChatMessage
         return { ...message, verificationStatus: 'NO_SIGNATURE' };
     }
     try {
-        const messageVerificationStr = buildMessageVerificationStr(message);
-        console.log('verify message deprecated: ', { messageId: message.id, messageVerificationStr });
         const trusted = await verifyMessage(message.maker, message.content, podchatSignature);
         return { ...message, verificationStatus: trusted === true ? 'TRUSTED' : 'INVALID_SIGNATURE' };
     } catch (error) {
