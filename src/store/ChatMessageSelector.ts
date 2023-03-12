@@ -4,7 +4,8 @@ import { removeHashFromUrl } from "./solid/Constants";
 import { locationFromMessageResourceUrl } from "./solid/Message";
 
 const selectChatId = (_state: ChatMessageState, chatId: string) => chatId;
-const selectReplySelector = (_state: ChatMessageState, replySelector: { chatId: string, messageId: string }) => replySelector;
+const selectMessageSelector = (_state: ChatMessageState, messageSelector: { chatId: string, messageId: string }) => messageSelector;
+const selectMessageReplySelector = (_state: ChatMessageState, messageReplySelector: { chatId: string, messageId: string }) => messageReplySelector;
 const selectResourceSelector = (_state: ChatMessageState, resourceSelector: { chatId: string, searchResultChatId: string, location: ChatMessageLocation }) => resourceSelector;
 const selectResults = (state: ChatMessageState) => state.results;
 
@@ -47,7 +48,7 @@ export const makeSelectLoadResultPending = () => createSelector(
 );
 
 export const makeSelectMessageReplyGroups = () => createSelector(
-    [selectReplySelector, selectResults],
+    [selectMessageReplySelector, selectResults],
     (replySelector, results) => {
         const replySelectorLocation = locationFromMessageResourceUrl(removeHashFromUrl(replySelector.messageId));
         return results
@@ -79,5 +80,16 @@ export const makeSelectMessageResource = () => createSelector(
         .filter(searchResult => searchResult.chatId === resourceSelector.searchResultChatId)
         .flatMap(searchResult => searchResult.resources)
         .filter(resource => locationComparator(resource.location, resourceSelector.location) === 0)
+        .pop()
+);
+
+export const makeSelectMessage = () => createSelector(
+    [selectMessageSelector, selectResults],
+    (messageSelector, results) => results
+        .filter(result => result.chatId === messageSelector.chatId)
+        .flatMap(result => result.searchResults)
+        .flatMap(searchResult => searchResult.resources)
+        .flatMap(resources => resources.messages)
+        .filter(message => message.id === messageSelector.messageId)
         .pop()
 );

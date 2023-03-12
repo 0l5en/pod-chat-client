@@ -6,7 +6,7 @@ import { useAppDispatch } from "../../store";
 import { setMessageAnswer } from "../../store/ChatMessageAnswerSlice";
 import { useChatMessage } from "../../store/ChatMessageHook";
 import { useChatMessageReplyGroups } from "../../store/ChatMessageReplyHook";
-import { loadNextResult, syncChatMessageResource } from "../../store/ChatMessageSlice";
+import { loadNextResult, syncChatMessageResource, verifyChatMessage } from "../../store/ChatMessageSlice";
 import { useChat, useDashboard } from "../../store/DashboardHook";
 import { useProfile } from "../../store/ProfileHook";
 import { loadProfile } from "../../store/ProfileSlice";
@@ -198,6 +198,12 @@ const MessagePanel = ({ chatId, message }: { chatId: string, message: ChatMessag
         }
     }, [dispatch, modified, chat, message.id]);
 
+    useEffect(() => {
+        if (chat && message.verificationStatus === 'NOT_VERIFIED') {
+            dispatch(verifyChatMessage({ chatId: chat.id, messageId: message.id }));
+        }
+    }, [dispatch, message, chat]);
+
     return (
         <>
             <div className="d-flex justify-content-between">
@@ -206,8 +212,9 @@ const MessagePanel = ({ chatId, message }: { chatId: string, message: ChatMessag
                         ? <ProfileHeader name={dashboard.profile.name} image={dashboard.profile.image} nameOnHover={true} size="sm" />
                         : profileWrapper?.profile && <ProfileHeader name={profileWrapper.profile.name} image={profileWrapper.profile.image} nameOnHover={true} size="sm" />}
                     <small className="text-muted flex-grow-1">{new Date(message.created).toLocaleString()} {pending && <PendingSpinner />}</small>
-                    {message.trusted === false && <i className="text-danger mb-1 mx-1"><WithTooltip tooltipMessage="Not signed by author!"><FaExclamationTriangle /></WithTooltip></i>}
-                    {message.trusted === undefined && <i className="text-secondary mb-1 mx-1"><WithTooltip tooltipMessage="The message has no signature!"><FaExclamationCircle /></WithTooltip></i>}
+                    {message.verificationStatus === 'INVALID_SIGNATURE' && <i className="text-danger mb-1 mx-1"><WithTooltip tooltipMessage="Not signed by author!"><FaExclamationTriangle /></WithTooltip></i>}
+                    {message.verificationStatus === 'NO_SIGNATURE' && <i className="text-secondary mb-1 mx-1"><WithTooltip tooltipMessage="The message has no signature!"><FaExclamationCircle /></WithTooltip></i>}
+                    {message.verificationStatus === 'ERROR' && <i className="text-danger mb-1 mx-1"><WithTooltip tooltipMessage="An error occurred while validating the message!"><FaExclamationTriangle /></WithTooltip></i>}
                 </div>
                 <div className="d-flex align-items-center">
                     <div className="mx-1 text-primary"><MessageMenuDropdown onClickMenuItem={onClickMessageMenuDropdownItem} disabled={pending} /></div>

@@ -76,25 +76,22 @@ export const loadChatMessageResource = async (chatId: string, resourceUrl: strin
         }
         await rdfStore.fetcher.load(resourceUrl, { force });
 
-        // return verified messages
-        const messages = await verifySignedMessageContent(
-            // select messages from rdfStore
-            rdfStore.cache.each(rdfStore.cache.sym(chatId), rdfStore.cache.sym(FLOW.message), undefined, rdfStore.cache.sym(resourceUrl))
-                .reduce((acc, messageId) => {
-                    const content = extractObjectLastValue(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(SIOC.content));
-                    const created = extractObject(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(DCTERMS.created))
-                        .map(n => dateAsNumberFromQuadObject(n) || 0)
-                        .pop();
-                    const maker = extractObjectLastValue(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(FOAF.maker));
-                    if (content && created && maker) {
-                        return [...acc, { id: messageId.value, content, created, maker }];
-                    }
-                    return acc;
-                }, [] as Array<ChatMessage>),
-            resourceUrl
-        );
+        // select messages from rdfStore
+        const messages = rdfStore.cache.each(rdfStore.cache.sym(chatId), rdfStore.cache.sym(FLOW.message), undefined, rdfStore.cache.sym(resourceUrl))
+            .reduce((acc, messageId) => {
+                const content = extractObjectLastValue(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(SIOC.content));
+                const created = extractObject(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(DCTERMS.created))
+                    .map(n => dateAsNumberFromQuadObject(n) || 0)
+                    .pop();
+                const maker = extractObjectLastValue(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(FOAF.maker));
+                if (content && created && maker) {
+                    const message: ChatMessage = { id: messageId.value, content, created, maker, verificationStatus: 'NOT_VERIFIED' };
+                    return [...acc, message];
+                }
+                return acc;
+            }, [] as Array<ChatMessage>);
 
-
+        // select message replies from rdfStore
         const replies = rdfStore.cache.each(undefined, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(SCHEMA.ReactAction), rdfStore.cache.sym(resourceUrl))
             .reduce((acc, replyId) => {
                 const name = extractObjectLastValue(rdfStore, replyId.value, resourceUrl, rdfStore.cache.sym(SCHEMA.name));
@@ -191,6 +188,19 @@ export const createChatMessageResource = (chatId: string, location: ChatMessageL
     }
 }
 
+export const verifyChatMessage = async (message: ChatMessage): Promise<ChatMessage> => {
+    const signature = extractObjectLastValue(rdfStore, message.id, removeHashFromUrl(message.id), rdfStore.cache.sym(PODCHAT.signature));
+    if (!signature) {
+        return { ...message, verificationStatus: 'NO_SIGNATURE' };
+    }
+    try {
+        const { trusted } = await verifyMessage(message.maker, message.id, message.content, signature);
+        return { ...message, verificationStatus: trusted === true ? 'TRUSTED' : 'INVALID_SIGNATURE' };
+    } catch (error) {
+        return { ...message, verificationStatus: 'ERROR' };
+    }
+};
+
 const padMonthOrDay = (num: number) => {
     var s = "0" + num;
     return s.substring(s.length - 2, s.length);
@@ -282,25 +292,6 @@ const traverseSolidLongChatMessageContainers = async (chatId: string, depth: num
         return createEndResult(chatId);
     }
 };
-
-const verifySignedMessageContent = async (messages: ChatMessage[], resourceUrl: string): Promise<ChatMessage[]> => {
-    const verificationResults = await Promise.all(messages.reduce((acc, message) => {
-        const signature = extractObjectLastValue(rdfStore, message.id, resourceUrl, rdfStore.cache.sym(PODCHAT.signature));
-        if (signature) {
-            return [...acc, verifyMessage(message.maker, message.id, message.content, signature)];
-        }
-        return acc;
-    }, [] as Array<Promise<{ messageId: string, trusted: boolean }>>));
-
-    return messages.map(message => {
-        const messageVerificationResult = verificationResults.find(vr => vr.messageId === message.id);
-        if (messageVerificationResult) {
-            return { ...message, trusted: messageVerificationResult.trusted };
-        } else {
-            return message;
-        }
-    });
-}
 
 const generateMessageId = () => {
     return "msg-" + uuid.v4();
