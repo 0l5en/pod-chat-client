@@ -23,7 +23,6 @@ export const signMessage = async (rsaPrivateKeyResourceUrl: string, message: Cha
     const privateKey = await getPrivateKey(rsaPrivateKeyResourceUrl);
     if (privateKey) {
         const messageVerificationStr = buildMessageVerificationStr(message);
-        console.log('sign message ', { messageId: message.id, messageVerificationStr });
         const messageContentEnc = new TextEncoder().encode(messageVerificationStr);
         const signature = await window.crypto.subtle.sign(
             {
@@ -42,7 +41,6 @@ export const signMessage = async (rsaPrivateKeyResourceUrl: string, message: Cha
 }
 
 export const verifyMessage = async (profileId: string, messageVerificationString: string, signatureEncoded: string): Promise<boolean> => {
-
 
     let encoded = new TextEncoder().encode(messageVerificationString);
 
