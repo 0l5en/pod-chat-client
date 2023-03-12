@@ -1,5 +1,6 @@
 import { ACL, RDF, SIOC } from '@inrupt/vocab-common-rdf';
 import { literal, quad, Statement } from 'rdflib';
+import { ChatMessage } from '../../types';
 import { PODCHAT, removeHashFromUrl } from './Constants';
 import rdfStore, { extractObjectLastValue } from './RdfStore';
 
@@ -18,10 +19,12 @@ export const prepareRsaKeyPair = async (profileId: string, rsaPrivateKeyResource
     }
 }
 
-export const signMessage = async (rsaPrivateKeyResourceUrl: string, messageContent: string): Promise<string | undefined> => {
+export const signMessage = async (rsaPrivateKeyResourceUrl: string, message: ChatMessage): Promise<string | undefined> => {
     const privateKey = await getPrivateKey(rsaPrivateKeyResourceUrl);
     if (privateKey) {
-        const messageContentEnc = new TextEncoder().encode(messageContent);
+        const messageVerificationStr = buildMessageVerificationStr(message);
+        console.log('sign message ', { messageId: message.id, messageVerificationStr });
+        const messageContentEnc = new TextEncoder().encode(messageVerificationStr);
         const signature = await window.crypto.subtle.sign(
             {
                 name: "RSA-PSS",
@@ -38,8 +41,11 @@ export const signMessage = async (rsaPrivateKeyResourceUrl: string, messageConte
     return undefined;
 }
 
-export const verifyMessage = async (profileId: string, messageId: string, messageContent: string, signatureEncoded: string): Promise<{ messageId: string, trusted: boolean }> => {
-    let encoded = new TextEncoder().encode(messageContent);
+export const verifyMessage = async (profileId: string, messageVerificationString: string, signatureEncoded: string): Promise<boolean> => {
+
+
+    let encoded = new TextEncoder().encode(messageVerificationString);
+
     const publicKey = await getPublicKey(profileId);
     // base64 decode the string to get the binary data
     const binaryDerString = window.atob(signatureEncoded);
@@ -47,7 +53,7 @@ export const verifyMessage = async (profileId: string, messageId: string, messag
     const signature = str2ab(binaryDerString);
 
     if (publicKey) {
-        const trusted = await window.crypto.subtle.verify(
+        return await window.crypto.subtle.verify(
             {
                 name: "RSA-PSS",
                 saltLength: 32,
@@ -56,10 +62,17 @@ export const verifyMessage = async (profileId: string, messageId: string, messag
             signature,
             encoded
         );
-        return { messageId, trusted };
     }
 
-    return { messageId, trusted: false };
+    return false;
+}
+
+export function buildMessageVerificationStr(message: ChatMessage): string {
+    // The date for verification can only be exact to the second, 
+    // since the milliseconds are set to zero when it is transferred to/from the pod.
+    const createdDate = new Date(message.created);
+    createdDate.setMilliseconds(0);
+    return message.id + createdDate.getTime() + message.content + message.maker;
 }
 
 const getPublicKey = async (profileId: string): Promise<CryptoKey | undefined> => {
@@ -208,13 +221,16 @@ async function pubKeySpkiPem(pubKey: CryptoKey, profileId: string) {
 }
 
 /*
-  Convert  an ArrayBuffer into a string
-  */
-function ab2str(buf: ArrayBuffer) {
+ * Convert an ArrayBuffer into a string
+ */
+function ab2str(buf: ArrayBuffer): string {
     return String.fromCharCode.apply(null, new Uint8Array(buf) as unknown as number[]);
 }
 
-function str2ab(str: string) {
+/*
+ * Convert a string into an ArrayBuffer
+ */
+function str2ab(str: string): ArrayBuffer {
     const buf = new ArrayBuffer(str.length);
     const bufView = new Uint8Array(buf);
     for (let i = 0, strLen = str.length; i < strLen; i++) {
