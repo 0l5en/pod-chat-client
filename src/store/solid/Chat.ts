@@ -1,5 +1,5 @@
 import { ACL, DCTERMS, ICAL, LDP, RDF } from "@inrupt/vocab-common-rdf";
-import { Statement } from "rdflib";
+import { lit, quad, Statement } from "rdflib";
 import * as uuid from "uuid";
 import { Chat, Participant } from "../../types";
 import {
@@ -10,7 +10,6 @@ import {
     STORAGE_LONG_CHAT_RESOURCE_NAME
 } from "./Constants";
 import rdfStore, { dateAsNumberFromQuadObject, extractObject, extractObjectLastValue, literalFromDate } from './RdfStore';
-const rdf = require('rdflib');
 
 /**
  * Extracts the id value from webid of chat. The webid
@@ -66,7 +65,7 @@ export const toggleParticipantHasReadAccess = async (chatId: string, participant
         rdfStore.cache.each(undefined, rdfStore.cache.sym(ACL.mode), rdfStore.cache.sym(ACL.Read), graph)
             .filter(aclId => rdfStore.cache.each(rdfStore.cache.sym(aclId.value), rdfStore.cache.sym(ACL.mode), undefined, graph).length === 1)
             .forEach(aclId => {
-                del.push(rdf.quad(aclId, rdfStore.cache.sym(ACL.agent), rdfStore.cache.sym(participantId), graph));
+                del.push(quad(aclId, rdfStore.cache.sym(ACL.agent), rdfStore.cache.sym(participantId), graph));
             });
         await rdfStore.updateManager.update(del, []);
         return false;
@@ -76,7 +75,7 @@ export const toggleParticipantHasReadAccess = async (chatId: string, participant
         .filter(aclId => rdfStore.cache.each(rdfStore.cache.sym(aclId.value), rdfStore.cache.sym(ACL.mode), undefined, graph).length === 1)
         .pop();
     if (aclId) {
-        await rdfStore.updateManager.update([], [rdf.quad(aclId, rdfStore.cache.sym(ACL.agent), rdfStore.cache.sym(participantId), graph)]);
+        await rdfStore.updateManager.update([], [quad(aclId, rdfStore.cache.sym(ACL.agent), rdfStore.cache.sym(participantId), graph)]);
     } else {
         throw new Error('cannot add read access: no readonly rule exists in acl');
     }
@@ -122,7 +121,7 @@ export const removeFromTypeIndex = async (chatId: string, typeIndex: string): Pr
     const graph = rdfStore.cache.sym(typeIndex);
     rdfStore.cache.each(undefined, rdfStore.cache.sym(SOLID_TERMS.forClass), rdfStore.cache.sym(PIM_MEETING.LongChat), graph)
         .filter(id => rdfStore.cache.holds(rdfStore.cache.sym(id.value), rdfStore.cache.sym(SOLID_TERMS.instance), rdfStore.cache.sym(chatId), graph))
-        .forEach(id => del.push(rdf.quad(id, rdfStore.cache.sym(SOLID_TERMS.instance), rdfStore.cache.sym(chatId), graph)));
+        .forEach(id => del.push(quad(id, rdfStore.cache.sym(SOLID_TERMS.instance), rdfStore.cache.sym(chatId), graph)));
 
     await rdfStore.updateManager.update(del, []);
 }
@@ -135,15 +134,15 @@ export const createChat = async (authorWebid: string, otherWebids: string[], now
     const ins: any[] = [];
     const graph = rdfStore.cache.sym(chatResourceUrl);
 
-    ins.push(rdf.quad(chatId, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(PIM_MEETING.LongChat), graph));
-    ins.push(rdf.quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.author), rdfStore.cache.sym(authorWebid), graph));
-    ins.push(rdf.quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.created), literalFromDate(now), graph));
-    ins.push(rdf.quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.title), rdf.lit(chatTitle), graph));
+    ins.push(quad(chatId, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(PIM_MEETING.LongChat), graph));
+    ins.push(quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.author), rdfStore.cache.sym(authorWebid), graph));
+    ins.push(quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.created), literalFromDate(now), graph));
+    ins.push(quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.title), lit(chatTitle), graph));
     [authorWebid, ...otherWebids].forEach(profileId => {
         const participationId = rdfStore.cache.sym(chatResourceUrl + '#' + uuid.v4());
-        ins.push(rdf.quad(participationId, rdfStore.cache.sym(ICAL.dtstart), literalFromDate(now), graph));
-        ins.push(rdf.quad(participationId, rdfStore.cache.sym(FLOW.participant), rdfStore.cache.sym(profileId), graph));
-        ins.push(rdf.quad(chatId, rdfStore.cache.sym(FLOW.participation), participationId, graph))
+        ins.push(quad(participationId, rdfStore.cache.sym(ICAL.dtstart), literalFromDate(now), graph));
+        ins.push(quad(participationId, rdfStore.cache.sym(FLOW.participant), rdfStore.cache.sym(profileId), graph));
+        ins.push(quad(chatId, rdfStore.cache.sym(FLOW.participation), participationId, graph))
     });
 
     await rdfStore.updateManager.update([], ins);
@@ -160,25 +159,25 @@ export const joinChat = async (authorWebid: string, participants: Participant[],
     const ins: any[] = [];
     const graph = rdfStore.cache.sym(chatResourceUrl);
 
-    ins.push(rdf.quad(chatId, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(PIM_MEETING.LongChat), graph));
-    ins.push(rdf.quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.author), rdfStore.cache.sym(authorWebid), graph));
-    ins.push(rdf.quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.created), literalFromDate(now), graph));
-    ins.push(rdf.quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.title), rdf.lit(chatTitle), graph));
+    ins.push(quad(chatId, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(PIM_MEETING.LongChat), graph));
+    ins.push(quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.author), rdfStore.cache.sym(authorWebid), graph));
+    ins.push(quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.created), literalFromDate(now), graph));
+    ins.push(quad(chatId, rdfStore.cache.sym(DC_ELEMENTS.title), lit(chatTitle), graph));
 
     const authorParticipationId = rdfStore.cache.sym(chatResourceUrl + '#' + uuid.v4());
-    ins.push(rdf.quad(authorParticipationId, rdfStore.cache.sym(ICAL.dtstart), literalFromDate(now), graph));
-    ins.push(rdf.quad(authorParticipationId, rdfStore.cache.sym(FLOW.participant), rdfStore.cache.sym(authorWebid), graph));
-    ins.push(rdf.quad(chatId, rdfStore.cache.sym(FLOW.participation), authorParticipationId, graph));
+    ins.push(quad(authorParticipationId, rdfStore.cache.sym(ICAL.dtstart), literalFromDate(now), graph));
+    ins.push(quad(authorParticipationId, rdfStore.cache.sym(FLOW.participant), rdfStore.cache.sym(authorWebid), graph));
+    ins.push(quad(chatId, rdfStore.cache.sym(FLOW.participation), authorParticipationId, graph));
 
 
     [...participants].forEach(participant => {
         const participationId = rdfStore.cache.sym(chatResourceUrl + '#' + uuid.v4());
-        ins.push(rdf.quad(participationId, rdfStore.cache.sym(ICAL.dtstart), literalFromDate(now), graph));
-        ins.push(rdf.quad(participationId, rdfStore.cache.sym(FLOW.participant), rdfStore.cache.sym(participant.id), graph));
+        ins.push(quad(participationId, rdfStore.cache.sym(ICAL.dtstart), literalFromDate(now), graph));
+        ins.push(quad(participationId, rdfStore.cache.sym(FLOW.participant), rdfStore.cache.sym(participant.id), graph));
         if (participant.chatId) {
-            ins.push(rdf.quad(participationId, rdfStore.cache.sym(DCTERMS.references), rdfStore.cache.sym(participant.chatId), graph));
+            ins.push(quad(participationId, rdfStore.cache.sym(DCTERMS.references), rdfStore.cache.sym(participant.chatId), graph));
         }
-        ins.push(rdf.quad(chatId, rdfStore.cache.sym(FLOW.participation), participationId, graph))
+        ins.push(quad(chatId, rdfStore.cache.sym(FLOW.participation), participationId, graph))
     });
 
     await rdfStore.updateManager.update([], ins);
@@ -200,7 +199,7 @@ export const setParticipantReferences = async (chatId: string, references: { par
             graph
         ).forEach(participationId => {
             del.push(...rdfStore.cache.statementsMatching(rdfStore.cache.sym(participationId.value), rdfStore.cache.sym(DCTERMS.references), undefined, graph));
-            ins.push(rdf.quad(rdfStore.cache.sym(participationId.value), rdfStore.cache.sym(DCTERMS.references), rdfStore.cache.sym(reference.participantChatId), graph));
+            ins.push(quad(rdfStore.cache.sym(participationId.value), rdfStore.cache.sym(DCTERMS.references), rdfStore.cache.sym(reference.participantChatId), graph));
         });
     });
     await rdfStore.updateManager.update(del, ins);
@@ -263,14 +262,14 @@ const createAclDatasetForChatContainer = async (chatResourceUrl: string, authorI
 const aclForChatContainer = (ins: any[], aclName: string, chatContainerResourceUrl: string, aclResourceUrl: string, agents: Array<string>, modes: string[]): void => {
     const graph = rdfStore.cache.sym(aclResourceUrl);
     const aclId = rdfStore.cache.sym(aclResourceUrl + '#' + aclName);
-    ins.push(rdf.quad(aclId, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(ACL.Authorization), graph));
-    ins.push(rdf.quad(aclId, rdfStore.cache.sym(ACL.accessTo), rdfStore.cache.sym(chatContainerResourceUrl), graph));
-    ins.push(rdf.quad(aclId, rdfStore.cache.sym(ACL.default), rdfStore.cache.sym(chatContainerResourceUrl), graph));
+    ins.push(quad(aclId, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(ACL.Authorization), graph));
+    ins.push(quad(aclId, rdfStore.cache.sym(ACL.accessTo), rdfStore.cache.sym(chatContainerResourceUrl), graph));
+    ins.push(quad(aclId, rdfStore.cache.sym(ACL.default), rdfStore.cache.sym(chatContainerResourceUrl), graph));
     modes.forEach(mode => {
-        ins.push(rdf.quad(aclId, rdfStore.cache.sym(ACL.mode), rdfStore.cache.sym(mode), graph));
+        ins.push(quad(aclId, rdfStore.cache.sym(ACL.mode), rdfStore.cache.sym(mode), graph));
     });
     agents.forEach(agent => {
-        ins.push(rdf.quad(aclId, rdfStore.cache.sym(ACL.agent), rdfStore.cache.sym(agent), graph));
+        ins.push(quad(aclId, rdfStore.cache.sym(ACL.agent), rdfStore.cache.sym(agent), graph));
     });
 }
 
@@ -282,9 +281,9 @@ const updateTypeIndex = async (chatId: string, typeIndex: string) => {
         .pop();
     if (!id) {
         id = rdfStore.cache.sym(typeIndex + '#' + uuid.v4());
-        ins.push(rdf.quad(id, rdfStore.cache.sym(SOLID_TERMS.forClass), rdfStore.cache.sym(PIM_MEETING.LongChat), graph));
+        ins.push(quad(id, rdfStore.cache.sym(SOLID_TERMS.forClass), rdfStore.cache.sym(PIM_MEETING.LongChat), graph));
     }
-    ins.push(rdf.quad(id, rdfStore.cache.sym(SOLID_TERMS.instance), rdfStore.cache.sym(chatId), graph));
+    ins.push(quad(id, rdfStore.cache.sym(SOLID_TERMS.instance), rdfStore.cache.sym(chatId), graph));
     await rdfStore.updateManager.update([], ins);
 }
 

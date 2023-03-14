@@ -1,10 +1,9 @@
 import { AS, DCTERMS, RDF } from "@inrupt/vocab-common-rdf";
-import { Statement } from "rdflib";
+import { graph, quad, serialize, Statement } from "rdflib";
 import * as uuid from "uuid";
 import { SolidNotification } from "../../types";
 import { PODCHAT, STORAGE_APP_BASE, STORAGE_NOTIFICATIONS_CLEANUP_BATCH_SIZE, STORAGE_NOTIFICATIONS_PROCESSED } from "./Constants";
 import rdfStore, { compareDateLiteralNodes, literalFromDate } from "./RdfStore";
-const rdf = require('rdflib');
 
 export const sendAddLongChatMessageNotification = async (chatId: string, messageId: string, actorId: string, participationInbox: string, now: Date) => {
     await sendNotification(AS.Add, PODCHAT.LongChatMessage, chatId, messageId, actorId, participationInbox, now);
@@ -23,19 +22,19 @@ const sendNotification = async (rdfType: string, context: string, targetId: stri
     const notificationIns: Array<any> = [];
     const notificationSubj = rdfStore.cache.sym(participationInbox + uuid.v4() + ".ttl");
 
-    notificationIns.push(rdf.quad(notificationSubj, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(rdfType), notificationSubj));
-    notificationIns.push(rdf.quad(notificationSubj, rdfStore.cache.sym(AS.context), rdfStore.cache.sym(context), notificationSubj));
-    notificationIns.push(rdf.quad(notificationSubj, rdfStore.cache.sym(AS.actor), rdfStore.cache.sym(actorId), notificationSubj));
-    notificationIns.push(rdf.quad(notificationSubj, rdfStore.cache.sym(AS.object), rdfStore.cache.sym(objectId), notificationSubj));
-    notificationIns.push(rdf.quad(notificationSubj, rdfStore.cache.sym(AS.target), rdfStore.cache.sym(targetId), notificationSubj));
-    notificationIns.push(rdf.quad(notificationSubj, rdfStore.cache.sym(AS.updated), literalFromDate(now), notificationSubj));
+    notificationIns.push(quad(notificationSubj, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(rdfType), notificationSubj));
+    notificationIns.push(quad(notificationSubj, rdfStore.cache.sym(AS.context), rdfStore.cache.sym(context), notificationSubj));
+    notificationIns.push(quad(notificationSubj, rdfStore.cache.sym(AS.actor), rdfStore.cache.sym(actorId), notificationSubj));
+    notificationIns.push(quad(notificationSubj, rdfStore.cache.sym(AS.object), rdfStore.cache.sym(objectId), notificationSubj));
+    notificationIns.push(quad(notificationSubj, rdfStore.cache.sym(AS.target), rdfStore.cache.sym(targetId), notificationSubj));
+    notificationIns.push(quad(notificationSubj, rdfStore.cache.sym(AS.updated), literalFromDate(now), notificationSubj));
 
-    const tmpStore = rdf.graph();
+    const tmpStore = graph();
     tmpStore.add(notificationIns);
 
     const doc = notificationSubj.doc();
     const docValue = doc.value;
-    const rdfCnt = rdf.serialize(doc, tmpStore, docValue);
+    const rdfCnt = serialize(doc, tmpStore, docValue);
     if (rdfCnt) {
         const result = await rdfStore.fetcher.webOperation("POST", participationInbox, {
             data: rdfCnt,
@@ -59,8 +58,8 @@ export const acceptNotifications = async (notifications: SolidNotification[], pr
         const graph = rdfStore.cache.sym(notificationsProcessedResourceUrl);
         notifications.forEach(notification => {
             del.push(...rdfStore.cache.each(rdfStore.cache.sym(notification.id), rdfStore.cache.sym(DCTERMS.modified), undefined, graph)
-                .map(node => rdf.quad(rdfStore.cache.sym(notification.id), rdfStore.cache.sym(DCTERMS.modified), node, graph)));
-            ins.push(rdf.quad(rdfStore.cache.sym(notification.id), rdfStore.cache.sym(DCTERMS.modified), literalFromDate(now), graph));
+                .map(node => quad(rdfStore.cache.sym(notification.id), rdfStore.cache.sym(DCTERMS.modified), node, graph)));
+            ins.push(quad(rdfStore.cache.sym(notification.id), rdfStore.cache.sym(DCTERMS.modified), literalFromDate(now), graph));
         });
         await rdfStore.updateManager.update(del, ins);
     } catch (error) {

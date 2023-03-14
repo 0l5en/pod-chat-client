@@ -32,7 +32,7 @@ const ViewLogin = () => {
 
     return (
         <Card className="overflow-hidden h-100">
-            <Card.Img src={process.env.PUBLIC_URL + "/logo-bg-01.png"} alt="Background" />
+            <Card.Img src={"/logo-bg-01.png"} alt="Background" />
             <Card.ImgOverlay>
                 <Card.Title className="d-flex align-items-center flex-shrink-0"> </Card.Title>
                 <Card.Body className="d-flex flex-column flex-grow-1 overflow-auto h-100">

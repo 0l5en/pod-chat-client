@@ -1,8 +1,7 @@
 import { fetch as solidFetch } from "@inrupt/solid-client-authn-browser";
-import { Fetcher, isLiteral, Literal, Node, Store, UpdateManager } from "rdflib";
+import { Fetcher, graph, isLiteral, Literal, Node, Store, UpdateManager } from 'rdflib';
 import { ObjectType, PredicateType } from "rdflib/lib/types";
 import { XML_SCHEMA } from "./Constants";
-const rdf = require('rdflib');
 
 export type RdfStore = {
     cache: Store,
@@ -11,9 +10,9 @@ export type RdfStore = {
 }
 
 const create = (): RdfStore => {
-    const cache = rdf.graph();
-    const fetcher = new rdf.Fetcher(cache, { fetch: solidFetch });
-    const updater = new rdf.UpdateManager(cache);
+    const cache = graph();
+    const fetcher = new Fetcher(cache, { fetch: solidFetch });
+    const updater = new UpdateManager(cache);
 
     return { cache, fetcher, updateManager: updater };
 }
@@ -21,9 +20,9 @@ const create = (): RdfStore => {
 const instance: RdfStore = create();
 
 export const reset = () => {
-    instance.cache = rdf.graph();
-    instance.fetcher = new rdf.Fetcher(instance.cache, { fetch: solidFetch });
-    instance.updateManager = new rdf.UpdateManager(instance.cache);
+    instance.cache = graph();
+    instance.fetcher = new Fetcher(instance.cache, { fetch: solidFetch });
+    instance.updateManager = new UpdateManager(instance.cache);
 }
 
 export function extractObject({ cache }: RdfStore, webid: string, resourceUrl: string, predicate: PredicateType): Array<Node> {

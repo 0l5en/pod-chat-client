@@ -7,7 +7,7 @@ function Navigation() {
             <Container>
                 <Navbar.Brand className="d-flex">
                     <Link to={'/'}>
-                        <Image src={process.env.PUBLIC_URL + "/logo.svg"} style={{ maxWidth: '48px' }} className="mr-2" />
+                        <Image src={"/logo.svg"} style={{ maxWidth: '48px' }} className="mr-2" />
                     </Link>
                     <h5 className="text-primary">pod-chat</h5>
                 </Navbar.Brand>

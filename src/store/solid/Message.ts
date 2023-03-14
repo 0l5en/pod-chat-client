@@ -1,11 +1,10 @@
 import { DCTERMS, FOAF, LDP, RDF, SIOC } from "@inrupt/vocab-common-rdf";
-import { literal, Statement } from "rdflib";
-import * as uuid from "uuid";
+import { literal, quad, Statement } from "rdflib";
+import { v4 } from "uuid";
 import { ChatMessage, ChatMessageLocation, ChatMessageReply, ChatMessageResource, ChatMessageSearchResult, locationComparator } from "../../types";
 import { currentContainerFromDoc, FLOW, PODCHAT, removeHashFromUrl, SCHEMA, STORAGE_LONG_CHAT_RESOURCE_NAME, W3ID_SECURITY } from "./Constants";
 import { buildMessageVerificationStr, verifyMessage } from "./Crypto";
 import rdfStore, { dateAsNumberFromQuadObject, extractObject, extractObjectLastValue, literalFromDateAsNumber } from "./RdfStore";
-const rdf = require('rdflib');
 
 export const sendMessageReply = async (chatId: string, messageId: string, name: string, agent: string): Promise<{ location: ChatMessageLocation; replyId: string, isAdd: boolean }> => {
     const location = locationFromMessageResourceUrl(removeHashFromUrl(messageId));
@@ -13,7 +12,7 @@ export const sendMessageReply = async (chatId: string, messageId: string, name: 
     const graph = rdfStore.cache.sym(resourceUrl);
 
     const firstMatch = rdfStore.cache.each(undefined, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(SCHEMA.ReactAction), graph)
-        .filter(node => rdfStore.cache.holds(rdfStore.cache.sym(node.value), rdfStore.cache.sym(SCHEMA.name), rdf.literal(name), graph))
+        .filter(node => rdfStore.cache.holds(rdfStore.cache.sym(node.value), rdfStore.cache.sym(SCHEMA.name), literal(name), graph))
         .filter(node => rdfStore.cache.holds(rdfStore.cache.sym(node.value), rdfStore.cache.sym(SCHEMA.agent), rdfStore.cache.sym(agent), graph))
         .filter(node => rdfStore.cache.holds(rdfStore.cache.sym(node.value), rdfStore.cache.sym(SCHEMA.target), rdfStore.cache.sym(messageId), graph))
         .pop();
@@ -29,10 +28,10 @@ export const sendMessageReply = async (chatId: string, messageId: string, name: 
     // add reply
     const ins: Statement[] = [];
     const replyId = rdfStore.cache.sym(resourceUrl + '#' + generateReplyId());
-    ins.push(rdf.quad(replyId, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(SCHEMA.ReactAction), graph));
-    ins.push(rdf.quad(replyId, rdfStore.cache.sym(SCHEMA.name), rdf.literal(name), graph));
-    ins.push(rdf.quad(replyId, rdfStore.cache.sym(SCHEMA.agent), rdfStore.cache.sym(agent), graph));
-    ins.push(rdf.quad(replyId, rdfStore.cache.sym(SCHEMA.target), rdfStore.cache.sym(messageId), graph));
+    ins.push(quad(replyId, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(SCHEMA.ReactAction), graph));
+    ins.push(quad(replyId, rdfStore.cache.sym(SCHEMA.name), literal(name), graph));
+    ins.push(quad(replyId, rdfStore.cache.sym(SCHEMA.agent), rdfStore.cache.sym(agent), graph));
+    ins.push(quad(replyId, rdfStore.cache.sym(SCHEMA.target), rdfStore.cache.sym(messageId), graph));
     await rdfStore.updateManager.update([], ins);
 
     return { location, replyId: replyId.value, isAdd: true };
@@ -60,14 +59,14 @@ export const sendMessage = async (chatId: string, message: ChatMessage, signatur
     const graph = rdfStore.cache.sym(resourceUrl);
     const messageSubject = rdfStore.cache.sym(message.id);
 
-    ins.push(rdf.quad(messageSubject, rdfStore.cache.sym(DCTERMS.created), literalFromDateAsNumber(message.created), graph));
-    ins.push(rdf.quad(messageSubject, rdfStore.cache.sym(SIOC.content), rdf.literal(message.content), graph));
-    ins.push(rdf.quad(messageSubject, rdfStore.cache.sym(FOAF.maker), rdfStore.cache.sym(message.maker), graph));
+    ins.push(quad(messageSubject, rdfStore.cache.sym(DCTERMS.created), literalFromDateAsNumber(message.created), graph));
+    ins.push(quad(messageSubject, rdfStore.cache.sym(SIOC.content), literal(message.content), graph));
+    ins.push(quad(messageSubject, rdfStore.cache.sym(FOAF.maker), rdfStore.cache.sym(message.maker), graph));
     if (signature) {
-        ins.push(rdf.quad(messageSubject, rdfStore.cache.sym(W3ID_SECURITY.proof), literal(signature), graph));
+        ins.push(quad(messageSubject, rdfStore.cache.sym(W3ID_SECURITY.proof), literal(signature), graph));
     }
 
-    ins.push(rdf.quad(rdfStore.cache.sym(chatId), rdfStore.cache.sym(FLOW.message), messageSubject, graph));
+    ins.push(quad(rdfStore.cache.sym(chatId), rdfStore.cache.sym(FLOW.message), messageSubject, graph));
 
 
     await rdfStore.updateManager.update([], ins);
@@ -315,9 +314,9 @@ const traverseSolidLongChatMessageContainers = async (chatId: string, depth: num
 };
 
 const generateMessageId = () => {
-    return "msg-" + uuid.v4();
+    return "msg-" + v4();
 }
 
 const generateReplyId = () => {
-    return "rpl-" + uuid.v4();
+    return "rpl-" + v4();
 }
