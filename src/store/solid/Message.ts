@@ -110,7 +110,8 @@ export const loadChatMessageResource = async (chatId: string, resourceUrl: strin
 
         return { messages, replies };
     } catch (error) {
-        console.warn('cannot load messages from ' + resourceUrl, error);
+        // TODO handle error
+        console.error('cannot load messages ', error);
     }
     return { messages: [], replies: [] };
 };
