@@ -1,18 +1,14 @@
 {
-  "name": "app",
-  "version": "0.1.0",
+  "name": "pod-chat-client",
+  "version": "3.13.1",
   "private": true,
-  "proxy": "http://localhost:8000",
-  "dependencies": {    
-    "@inrupt/solid-client-authn-browser": "1.13.0", 
+  "dependencies": {
+    "@inrupt/solid-client-authn-browser": "1.13.0",
     "@inrupt/vocab-common-rdf": "^1.0.5",
     "@reduxjs/toolkit": "^1.9.3",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^14.4.3",
     "bootstrap": "^5.2.3",
     "buffer": "^6.0.3",
-    "rdflib": "^2.2.21",
+    "rdflib": "^2.2.30",
     "react": "^18.2.0",
     "react-bootstrap": "^2.6.0",
     "react-copy-to-clipboard": "^5.1.0",
@@ -20,26 +16,35 @@
     "react-icons": "^4.8.0",
     "react-redux": "^8.0.5",
     "react-router-dom": "^6.9.0",
-    "react-scripts": "5.0.1",
     "reconnecting-websocket": "^4.4.0",
     "redux": "^4.2.0",
     "styled-components": "^5.3.8",
-    "typescript": "^4.9.5"
+    "typescript": "^4.9.5",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^14.4.3",
     "@types/jest": "^29.4.1",
     "@types/node": "^18.11.9",
     "@types/react": "^18.0.25",
     "@types/react-copy-to-clipboard": "^5.0.4",
     "@types/react-dom": "^18.0.9",
-    "@types/styled-components": "^5.1.26"
+    "@types/styled-components": "^5.1.26",
+    "@vitejs/plugin-react": "^3.1.0",
+    "@vitest/coverage-c8": "^0.29.2",
+    "jsdom": "^21.1.1",
+    "vite": "^4.1.4",
+    "vite-plugin-svgr": "^2.4.0",
+    "vite-tsconfig-paths": "^4.0.5",
+    "vitest": "^0.29.2"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "test:debug": "react-scripts --inspect-brk test --runInBand --no-cache",
-    "eject": "react-scripts eject"
+    "start": "vite",
+    "build": "tsc && vite build",
+    "test": "vitest run",
+    "coverage": "vitest run --coverage"
   },
   "eslintConfig": {
     "extends": [

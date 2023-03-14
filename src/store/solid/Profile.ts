@@ -1,8 +1,8 @@
 import { ACL, FOAF, LDP, VCARD } from "@inrupt/vocab-common-rdf";
+import { blankNode } from "rdflib";
 import { Profile } from "../../types";
 import { PIM_SPACE, removeHashFromUrl, SOLID_TERMS } from "./Constants";
 import rdfStore, { extractObjectLastValue } from "./RdfStore";
-const rdf = require('rdflib');
 
 export const loadProfileWrapper = async (profileId: string, force?: boolean): Promise<{ result?: Profile; error?: string }> => {
     try {
@@ -86,7 +86,7 @@ function isApplicationAccessPermitted(webid: string, resourceUrl: string, access
     const graph = rdfStore.cache.sym(resourceUrl);
     return rdfStore.cache
         .each(rdfStore.cache.sym(webid), rdfStore.cache.sym('http://www.w3.org/ns/auth/acl#trustedApp'), undefined, graph)
-        .filter(blankNodeId => rdfStore.cache.holds(rdf.blankNode(blankNodeId.value), rdfStore.cache.sym(ACL.origin), rdfStore.cache.sym(window.location.origin), graph))
-        .filter(blankNodeId => rdfStore.cache.holds(rdf.blankNode(blankNodeId.value), rdfStore.cache.sym(ACL.mode), rdfStore.cache.sym(access), graph))
+        .filter(blankNodeId => rdfStore.cache.holds(blankNode(blankNodeId.value), rdfStore.cache.sym(ACL.origin), rdfStore.cache.sym(window.location.origin), graph))
+        .filter(blankNodeId => rdfStore.cache.holds(blankNode(blankNodeId.value), rdfStore.cache.sym(ACL.mode), rdfStore.cache.sym(access), graph))
         .length > 0;
 }
