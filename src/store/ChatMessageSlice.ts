@@ -154,10 +154,14 @@ export const completeChatMessageAddNotifications = createAsyncThunk<ChatMessageS
                 const resource = makeSelectMessageResource()(state, { chatId, searchResultChatId: notification.targetId, location });
                 let newResource = getChatMessageResource(notification.targetId, location, result);
                 if (!newResource && (resource || locationComparator(location, locationYesterday) > -1)) {
-                    const messageResource = await loadChatMessageResource(notification.targetId, chatMessageResourceUrl, true);
-                    newResource = createChatMessageResource(notification.targetId, location, result);
-                    newResource.messages = messageResource.messages;
-                    newResource.replies = messageResource.replies;
+                    try {
+                        const messageResource = await loadChatMessageResource(notification.targetId, chatMessageResourceUrl, true);
+                        newResource = createChatMessageResource(notification.targetId, location, result);
+                        newResource.messages = messageResource.messages;
+                        newResource.replies = messageResource.replies;
+                    } catch (error) {
+                        // skip messageResource silently
+                    }
                 }
             }
             return result;

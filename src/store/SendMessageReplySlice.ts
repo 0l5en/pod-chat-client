@@ -3,7 +3,7 @@ import { AppState } from ".";
 import { ChatMessageReplySendState, ChatMessageResource, Profile } from "../types";
 import { makeSelectProfileWrapperById } from "./ProfileSlice";
 import { removeHashFromUrl } from "./solid/Constants";
-import { loadChatMessageResource, sendMessageReply } from "./solid/Message";
+import { createMessageReply, loadChatMessageResource, sendMessageReply } from "./solid/Message";
 import { sendAddLongChatMessageReplyNotification, sendRemoveLongChatMessageReplyNotification } from "./solid/Notification";
 
 export const sendMessageReplySubmit = createAsyncThunk<ChatMessageResource, { authorId: string, chatId: string, participationIds: string[], replyName: string, messageId: string }, { state: AppState, rejectValue: string }>(
@@ -11,9 +11,9 @@ export const sendMessageReplySubmit = createAsyncThunk<ChatMessageResource, { au
     async ({ authorId, chatId, participationIds, replyName, messageId }, { getState, rejectWithValue }) => {
         try {
 
-            // create new message reply and write to chat with matching chatId
+            // create new message reply and write to pod
             const now = new Date();
-            const { location, replyId, isAdd } = await sendMessageReply(chatId, messageId, replyName, authorId);
+            const { location, replyId, isAdd } = await sendMessageReply(createMessageReply(chatId, messageId, authorId, replyName));
             const resourceUrl = removeHashFromUrl(replyId);
 
             // post notification to participant inboxes
