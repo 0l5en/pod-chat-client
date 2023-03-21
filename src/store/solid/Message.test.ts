@@ -1,5 +1,6 @@
-import { graph, IndexedFormula, parse } from 'rdflib';
+import { graph, IndexedFormula } from 'rdflib';
 import { expect, Mock, vi } from 'vitest';
+import { prepareCache } from '../../testUtils';
 import { ChatMessage, ChatMessageLocation, ChatMessageReply, ChatMessageResource, ChatMessageSearchResult } from '../../types';
 import { createChatMessageResource, createMessage, createMessageReply, getChatMessageResource, loadChatMessageResource, loadMessagesForChats, locationFromMessageResourceUrl, sendMessage, sendMessageReply, verifyChatMessage } from "./Message";
 import rdfStore from './RdfStore';
@@ -76,7 +77,7 @@ describe('Message', () => {
         });
 
         it('should remove a reply', async () => {
-            await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource);
+            await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource, rdfStore.cache);
             const result = await sendMessageReply({ chatId: testUrlBob.chatId, ...createTestReply() });
             expect(result).toStrictEqual({
                 isAdd: false,
@@ -97,7 +98,7 @@ describe('Message', () => {
         });
 
         it('should add a reply', async () => {
-            await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource);
+            await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource, rdfStore.cache);
             const result = await sendMessageReply({
                 chatId: testUrlBob.chatId,
                 ...createTestReply(),
@@ -184,7 +185,7 @@ describe('Message', () => {
         });
 
         it('should return the expected result', async () => {
-            await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource);
+            await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource, rdfStore.cache);
             const result = await loadChatMessageResource(testUrlBob.chatId, testUrlBob.messageResource);
 
             expect(result.messages).toHaveLength(1);
@@ -196,7 +197,7 @@ describe('Message', () => {
         });
 
         it('should clear the cache for message resource on force', async () => {
-            await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource);
+            await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource, rdfStore.cache);
             const result = await loadChatMessageResource(testUrlBob.chatId, testUrlBob.messageResource, true);
 
             expect(result.messages).toHaveLength(0);
@@ -305,19 +306,19 @@ describe('Message', () => {
 
     describe('verifyChatMessage', () => {
         it('should find that there is no signature', async () => {
-            await prepareCache(MESSAGE_RESOURCE_CONTENT_NO_SIGNATURE, testUrlBob.messageResource);
+            await prepareCache(MESSAGE_RESOURCE_CONTENT_NO_SIGNATURE, testUrlBob.messageResource, rdfStore.cache);
             const result = await verifyChatMessage({ ...createTestMessage(testUrlBob) });
             expect(result).toStrictEqual({ ...createTestMessage(testUrlBob), verificationStatus: 'NO_SIGNATURE' });
         });
 
         it('should recognize an invalid signature using w3id proof of the message', async () => {
-            await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource);
+            await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource, rdfStore.cache);
             const result = await verifyChatMessage(createTestMessage(testUrlBob));
             expect(result).toStrictEqual({ ...createTestMessage(testUrlBob), verificationStatus: 'INVALID_SIGNATURE' });
         });
 
         it('should recognize an invalid signature using podchat signature of the message', async () => {
-            await prepareCache(MESSAGE_RESOURCE_CONTENT_DEPRECATED_SIGNATURE, testUrlBob.messageResource);
+            await prepareCache(MESSAGE_RESOURCE_CONTENT_DEPRECATED_SIGNATURE, testUrlBob.messageResource, rdfStore.cache);
             const result = await verifyChatMessage(createTestMessage(testUrlBob));
             expect(result).toStrictEqual({ ...createTestMessage(testUrlBob), verificationStatus: 'INVALID_SIGNATURE' });
         });
@@ -593,28 +594,16 @@ const expectedMessagesResult = [{
     }]
 }]
 
-const prepareCache = (content: string, baseUri: string): Promise<void> => {
-    return new Promise(resolve => {
-        parse(
-            content,
-            rdfStore.cache,
-            baseUri,
-            "text/turtle",
-            resolve
-        );
-    });
-}
-
 const prepareCacheWithMessage = async () => {
-    await prepareCache(CHAT_CONTAINER_CONTENT, testUrlBob.chatRoot);
-    await prepareCache(YEAR_CONTAINER_CONTENT, testUrlBob.yearContainer);
-    await prepareCache(MONTH_CONTAINER_CONTENT, testUrlBob.monthContainer);
-    await prepareCache(DAY_CONTAINER_CONTENT, testUrlBob.dayContainer);
-    await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource);
+    await prepareCache(CHAT_CONTAINER_CONTENT, testUrlBob.chatRoot, rdfStore.cache);
+    await prepareCache(YEAR_CONTAINER_CONTENT, testUrlBob.yearContainer, rdfStore.cache);
+    await prepareCache(MONTH_CONTAINER_CONTENT, testUrlBob.monthContainer, rdfStore.cache);
+    await prepareCache(DAY_CONTAINER_CONTENT, testUrlBob.dayContainer, rdfStore.cache);
+    await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlBob.messageResource, rdfStore.cache);
 
-    await prepareCache(CHAT_CONTAINER_CONTENT, testUrlAlice.chatRoot);
-    await prepareCache(YEAR_CONTAINER_CONTENT, testUrlAlice.yearContainer);
-    await prepareCache(MONTH_CONTAINER_CONTENT, testUrlAlice.monthContainer);
-    await prepareCache(DAY_CONTAINER_CONTENT, testUrlAlice.dayContainer);
-    await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlAlice.messageResource);
+    await prepareCache(CHAT_CONTAINER_CONTENT, testUrlAlice.chatRoot, rdfStore.cache);
+    await prepareCache(YEAR_CONTAINER_CONTENT, testUrlAlice.yearContainer, rdfStore.cache);
+    await prepareCache(MONTH_CONTAINER_CONTENT, testUrlAlice.monthContainer, rdfStore.cache);
+    await prepareCache(DAY_CONTAINER_CONTENT, testUrlAlice.dayContainer, rdfStore.cache);
+    await prepareCache(MESSAGE_RESOURCE_CONTENT, testUrlAlice.messageResource, rdfStore.cache);
 }

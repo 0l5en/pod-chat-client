@@ -72,7 +72,6 @@ For example, if Bob writes the first message for Alice on Sunday 1/1/2000 at 1am
 @prefix ind: <../../../index.ttl#>.
 @prefix w3id: <https://w3id.org/security#>.
 
-# podchat:signature has been shortened for better readability
 :msg-1af45c15-1bed-4b95-aa92-d075a321cf75
     dct:created "2000-01-01T01:00:00Z"^^xsd:dateTime;
     sioc:content
