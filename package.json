@@ -35,7 +35,7 @@
     "@vitejs/plugin-react": "^3.1.0",
     "@vitest/coverage-c8": "^0.29.2",
     "jsdom": "^21.1.1",
-    "vite": "^4.2.1",
+    "vite": "^4.3.9",
     "vite-plugin-svgr": "^2.4.0",
     "vite-tsconfig-paths": "^4.0.5",
     "vitest": "^0.29.2"
