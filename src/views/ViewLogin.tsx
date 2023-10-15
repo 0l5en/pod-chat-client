@@ -1,29 +1,44 @@
-import React, { useState } from "react";
-import { Button, Card, Col, Row } from "react-bootstrap";
+import React, { useRef, useState } from "react";
+import { Button, Card, Col, Dropdown, DropdownButton, Form, InputGroup, Row } from "react-bootstrap";
 import { FaRegCheckCircle } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { useAppDispatch } from "../store";
 import { solidLogin } from "../store/SolidAuthSlice";
+import PendingSpinner from "./components/PendingSpinner";
 import { POD_PROVIDERS } from "./components/PodProvider";
-import PodProviderUrlSelect from "./components/PodProviderUrlSelect";
 
-const ViewLogin = () => {
+const ViewLogin = ({ restoreSessionPending }: { restoreSessionPending: boolean }) => {
 
-    const [podProviderUrl, setPodProviderUrl] = useState(POD_PROVIDERS[1].url);
+    const [podProviderUrl, setPodProviderUrl] = useState('');
     const [podProviderSelectError, setPodProviderSelectError] = useState<string | undefined>(undefined);
     const dispatch = useAppDispatch();
+    const podProviderInputRef = useRef<HTMLInputElement | null>(null)
+
+    const onChangePodProviderUrl = (evt: React.ChangeEvent<HTMLInputElement>) => {
+        setPodProviderSelectError(undefined);
+        setPodProviderUrl(evt.target.value);
+    }
+
+    const onClickPodProviderSelector = (podProviderUrl: string) => {
+        if (podProviderInputRef.current) {
+            setPodProviderSelectError(undefined);
+            setPodProviderUrl(podProviderUrl);
+            podProviderInputRef.current.value = podProviderUrl;
+            podProviderInputRef.current.focus();
+        }
+    }
 
     const handleLogin = (evt: React.MouseEvent<HTMLElement>) => {
         evt.preventDefault();
 
         if (podProviderUrl === '') {
-            setPodProviderSelectError('Please type in a valid url for pod provider.');
+            setPodProviderSelectError('The value must not be empty.');
             return;
         }
         try {
             new URL(podProviderUrl);
         } catch (error) {
-            setPodProviderSelectError('invalid POD Provider URL');
+            setPodProviderSelectError('The value must be a valid URL of your POD-Provider');
             return;
         }
 
@@ -53,16 +68,25 @@ const ViewLogin = () => {
 
                         <Row className="mt-5">
                             <Col>
-                                <small className="text-muted mb-1">Select your pod provider and start to chat or <Link to="/register" className="text-decoration-none"><strong>register</strong></Link></small>
+                                <small className="text-muted mb-1">Select your pod provider and start to chat or <Link to="/register" className="text-decoration-none"><strong>register</strong></Link>{restoreSessionPending && <PendingSpinner />}</small>
                             </Col>
                         </Row>
                         <Row>
                             <Col sm={12} md={12} lg={6}>
-                                <div>
-                                    <PodProviderUrlSelect formControlId="login_pod_provider_url" podProviderUrl={podProviderUrl} setPodProviderUrl={setPodProviderUrl} podProviderSelectError={podProviderSelectError} setProviderSelectError={setPodProviderSelectError}>
-                                        <Button className="shadow-none ml-2" onClick={handleLogin}>Login</Button>
-                                    </PodProviderUrlSelect>
-                                </div>
+                                <InputGroup>
+                                    <Form.Control ref={podProviderInputRef} aria-label="URL of POD-Provider"
+                                        onChange={onChangePodProviderUrl} disabled={restoreSessionPending} isInvalid={podProviderSelectError !== undefined}
+                                        placeholder={POD_PROVIDERS[1].url} />
+                                    <DropdownButton variant="primary" title="" id="input-group-dropdown" align="end">
+                                        {POD_PROVIDERS.map(podProvider =>
+                                            <Dropdown.Item key={podProvider.url} href="#" onClick={() => onClickPodProviderSelector(podProvider.url)}>
+                                                {podProvider.name}
+                                            </Dropdown.Item>
+                                        )}
+                                    </DropdownButton>
+                                    <Button className="shadow-none ml-2" onClick={handleLogin} disabled={restoreSessionPending}>Login</Button>
+                                </InputGroup>
+                                <small className="text-danger">{podProviderSelectError}</small>
                             </Col>
                         </Row>
                         <Row>
