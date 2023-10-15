@@ -12,7 +12,7 @@ const solidAuthMiddleware = (): AppMiddleware<AppState, AnyAction> => {
 
     let trackSession = false;
 
-    const startTrackSession = async ({ dispatch }: MiddlewareAPI<Dispatch<AnyAction>>) => {
+    const startTrackSession = ({ dispatch }: MiddlewareAPI<Dispatch<AnyAction>>) => {
         if (!trackSession) {
             getDefaultSession().onLogin(() => {
                 const webid = getDefaultSession().info.webId;
