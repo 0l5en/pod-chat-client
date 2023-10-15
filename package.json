@@ -29,7 +29,7 @@
     "@types/jest": "^29.5.0",
     "@types/node": "^18.15.11",
     "@types/react": "^18.0.32",
-    "@types/react-copy-to-clipboard": "^5.0.4",
+    "@types/react-copy-to-clipboard": "^5.0.5",
     "@types/react-dom": "^18.0.9",
     "@types/styled-components": "^5.1.26",
     "@vitejs/plugin-react": "^3.1.0",
