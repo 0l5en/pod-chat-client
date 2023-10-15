@@ -1,19 +1,20 @@
 import { handleIncomingRedirect } from "@inrupt/solid-client-authn-browser";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAppDispatch } from "../store";
 import { loggedIn, useSolidAuth } from "../store/SolidAuthSlice";
 import ViewDashboard from "./ViewDashboard";
 import ViewLogin from "./ViewLogin";
 
 const ViewMain = ({ chatPath }: { chatPath: string }) => {
-
+    const [restoreSessionPending, setRestoreSessionPending] = useState<boolean>(false);
     const ref = useRef(false);
-    const { webid } = useSolidAuth();
+    const { webid, pending } = useSolidAuth();
     const dispatch = useAppDispatch();
 
     useEffect(() => {
         const init = async () => {
             try {
+                setRestoreSessionPending(true);
                 const info = await handleIncomingRedirect({
                     restorePreviousSession: true
                 });
@@ -22,6 +23,8 @@ const ViewMain = ({ chatPath }: { chatPath: string }) => {
                 }
             } catch (err) {
                 console.error(err);
+            } finally {
+                setRestoreSessionPending(false);
             }
         }
         if (!ref.current) {
@@ -31,7 +34,7 @@ const ViewMain = ({ chatPath }: { chatPath: string }) => {
     }, [dispatch]);
 
     return (
-        <>{webid ? <ViewDashboard chatPath={chatPath} webid={webid} /> : <ViewLogin />}</>
+        <>{webid ? <ViewDashboard chatPath={chatPath} webid={webid} /> : <ViewLogin restoreSessionPending={restoreSessionPending || pending} />}</>
     );
 }
 

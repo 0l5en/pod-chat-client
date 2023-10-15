@@ -1,14 +1,15 @@
 import { login, logout } from "@inrupt/solid-client-authn-browser";
-import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { useSelector } from "react-redux";
 import { AppState } from ".";
 
 export interface SolidAuthState {
+    pending: boolean,
     webid?: string,
     error?: string
 }
 
-const initialState: SolidAuthState = {};
+const initialState: SolidAuthState = { pending: false };
 
 export const solidLogin = createAsyncThunk<void, string, { rejectValue: string }>(
     "solidAuth/login",
@@ -43,22 +44,29 @@ const slice = createSlice({
         }
     },
     extraReducers: builder => {
-        builder.addCase(solidLogin.pending, () => { });
-        builder.addCase(solidLogin.fulfilled, () => { });
+        builder.addCase(solidLogin.pending, (state) => {
+            state.pending = true;
+        });
+        builder.addCase(solidLogin.fulfilled, (state) => {
+            state.pending = false;
+        });
         builder.addCase(solidLogin.rejected, (state, action) => {
             state.error = action.payload;
             state.webid = undefined;
+            state.pending = false;
         });
     }
 });
 
 const selectWebid = (state: SolidAuthState) => state.webid;
 const selectError = (state: SolidAuthState) => state.error;
+const selectPending = (state: SolidAuthState) => state.pending;
 
 export const useSolidAuth = () => {
     const webid = useSelector((state: AppState) => selectWebid(state.solidAuthState));
     const error = useSelector((state: AppState) => selectError(state.solidAuthState));
-    return { webid, error };
+    const pending = useSelector((state: AppState) => selectPending(state.solidAuthState));
+    return { webid, error, pending };
 }
 
 export default slice.reducer;
