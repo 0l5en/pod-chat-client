@@ -1,6 +1,5 @@
 import { Nav, Navbar } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
-import SpaceUsagedisplay from './SpaceUsageDisplay';
 
 const AppFooter = () => {
     return (
@@ -8,7 +7,7 @@ const AppFooter = () => {
             <Navbar.Toggle aria-controls="footer-navbar-nav" />
             <Navbar.Collapse id="footer-navbar-nav">
                 <Nav className="me-auto">
-                    <Nav.Item><Navbar.Text><SpaceUsagedisplay /></Navbar.Text></Nav.Item>
+                    {/* <Nav.Item><Navbar.Text><SpaceUsagedisplay /></Navbar.Text></Nav.Item> */}
                 </Nav>
                 <Nav className="ml-auto">
                     <Nav.Item><Nav.Link as={Link} to="/imprint">Imprint</Nav.Link></Nav.Item>
