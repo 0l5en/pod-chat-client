@@ -27,7 +27,7 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^14.4.3",
     "@types/jest": "^29.5.0",
-    "@types/node": "^18.15.11",
+    "@types/node": "^20.8.7",
     "@types/react": "^18.0.32",
     "@types/react-copy-to-clipboard": "^5.0.5",
     "@types/react-dom": "^18.0.9",
