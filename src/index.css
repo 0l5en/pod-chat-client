@@ -13,6 +13,8 @@
   --bs-white: #FFFFFF;
   --bs-link-color: #9d7aff;
   --bs-link-hover-color: #6941d8;
+  --bs-link-color-rgb: 157, 122, 255;
+  --bs-link-hover-color-rgb: 105, 65, 216;
 }
 
 .btn-link {
