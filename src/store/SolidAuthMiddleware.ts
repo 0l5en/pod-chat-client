@@ -1,4 +1,4 @@
-import { getDefaultSession } from "@inrupt/solid-client-authn-browser";
+import { EVENTS, getDefaultSession } from "@inrupt/solid-client-authn-browser";
 import { createAction } from "@reduxjs/toolkit";
 import { AnyAction, Dispatch, MiddlewareAPI } from "redux";
 import { AppState } from ".";
@@ -14,13 +14,13 @@ const solidAuthMiddleware = (): AppMiddleware<AppState, AnyAction> => {
 
     const startTrackSession = ({ dispatch }: MiddlewareAPI<Dispatch<AnyAction>>) => {
         if (!trackSession) {
-            getDefaultSession().onLogin(() => {
+            getDefaultSession().events.on(EVENTS.LOGIN, () => {
                 const webid = getDefaultSession().info.webId;
                 if (webid) {
                     dispatch(loggedIn(webid));
                 }
             });
-            getDefaultSession().onLogout(() => {
+            getDefaultSession().events.on(EVENTS.LOGOUT, () => {
                 trackSession = false;
                 dispatch(loggedOut());
                 dispatch(createSolidDownStreamDisconnectAction());
