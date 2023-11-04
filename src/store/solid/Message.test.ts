@@ -342,7 +342,7 @@ const verifyNoMockInteraction = () => {
 }
 
 type TestUrl = {
-    storage: string;
+    base: string;
     maker: string;
     chatRoot: string;
     chatResource: string;
@@ -354,9 +354,9 @@ type TestUrl = {
     messageId: string;
 }
 
-const createTestUrl = (storage: string): TestUrl => {
-    const maker = storage + "profile/card#me";
-    const chatRoot = storage + "chats/1/";
+const createTestUrl = (base: string): TestUrl => {
+    const maker = base + "profile/card#me";
+    const chatRoot = base + "chats/1/";
     const chatResource = chatRoot + "index.ttl";
     const chatId = chatResource + "#this";
     const yearContainer = chatRoot + '2022/';
@@ -365,7 +365,7 @@ const createTestUrl = (storage: string): TestUrl => {
     const messageResource = dayContainer + "chat.ttl";
     const messageId = messageResource + "#msg-1";
     return {
-        storage,
+        base,
         maker,
         chatRoot,
         chatResource,
