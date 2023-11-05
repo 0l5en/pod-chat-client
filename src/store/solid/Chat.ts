@@ -7,7 +7,6 @@ import {
     PIM_MEETING,
     SOLID_TERMS,
     STORAGE_APP_BASE,
-    STORAGE_LONG_CHAT_RESOURCE_FRAGMENT,
     STORAGE_LONG_CHAT_RESOURCE_NAME,
     currentContainerFromDoc,
     removeHashFromUrl
@@ -22,21 +21,23 @@ import rdfStore, { dateAsNumberFromQuadObject, extractObject, extractObjectLastV
  * @returns the id value of the chat
  */
 export const idValueFromChatId = (chatId: string): string => {
-    let chatUrl = new URL(chatId);
-    let chatContainerPath = chatUrl.pathname.substring(0, chatUrl.pathname.lastIndexOf('/'));
-    return chatContainerPath.substring(chatContainerPath.lastIndexOf('/') + 1);
+    // let chatUrl = new URL(chatId);
+    // let chatContainerPath = chatUrl.pathname.substring(0, chatUrl.pathname.lastIndexOf('/'));
+    // return chatContainerPath.substring(chatContainerPath.lastIndexOf('/') + 1);
+    return encodeURIComponent(chatId);
 };
 
 /**
  * Produces a webid for a chat from the given id value. The final URL will be prefixed with given storage value.
  * For examle if idValue is 1234 and storage is https://me.pod.provider/,
  * the final URL will be https://me.pod.provider/pod-chat/1234/index.ttl#this. 
- * @param storage the storge 
+ * @param storage the storage 
  * @param idValue the id value of the chat
  * @returns the webid of the chat
  */
 export const chatIdFromIdValue = (storage: string, idValue: string): string => {
-    return storage + STORAGE_APP_BASE + idValue + '/' + STORAGE_LONG_CHAT_RESOURCE_NAME + '#' + STORAGE_LONG_CHAT_RESOURCE_FRAGMENT;
+    // return storage + STORAGE_APP_BASE + idValue + '/' + STORAGE_LONG_CHAT_RESOURCE_NAME + '#' + STORAGE_LONG_CHAT_RESOURCE_FRAGMENT;
+    return decodeURIComponent(idValue);
 }
 
 export const loadChat = async (ownerId: string, chatId: string, force: boolean = false): Promise<Chat> => {
@@ -111,10 +112,21 @@ export const deleteRecursive = async (resourceUrl: string): Promise<void> => {
 
     const resourcePromises = resources.map(r => rdfStore.fetcher.webOperation('DELETE', r.value));
     await Promise.all(resourcePromises);
-    resources.forEach(r => rdfStore.cache.removeDocument(rdfStore.cache.sym(r.value)));
+    resources.forEach(r => {
+        try {
+            rdfStore.cache.removeDocument(rdfStore.cache.sym(r.value))
+        } catch (error) {
+            console.warn("cannot remove document: " + r.value, error);
+
+        }
+    });
 
     await rdfStore.fetcher.webOperation('DELETE', resourceUrl);
-    rdfStore.cache.removeDocument(rdfStore.cache.sym(resourceUrl));
+    try {
+        rdfStore.cache.removeDocument(rdfStore.cache.sym(resourceUrl));
+    } catch (error) {
+        console.warn("cannot remove document: " + resourceUrl, error);
+    }
 }
 
 export const removeFromTypeIndex = async (chatId: string, typeIndex: string): Promise<void> => {

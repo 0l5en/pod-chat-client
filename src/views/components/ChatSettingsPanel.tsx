@@ -9,7 +9,6 @@ import { useParticipantsHavingReadAccess } from "../../store/ChatSettingsHook";
 import { participantsHavingReadAccessLoad } from "../../store/ChatSettingsSlice";
 import { useChat, useDashboard } from "../../store/DashboardHook";
 import { removeChat } from "../../store/DashboardSlice";
-import { chatIdFromIdValue } from "../../store/solid/Chat";
 import { Chat, Dashboard } from "../../types";
 import ChatHeader from "./ChatHeader";
 import ChatOfParticipantPanel from "./ChatOfParticipantPanel";
@@ -57,9 +56,8 @@ const ChatSettingsFooter = ({ chatId, privateTypeIndex, publicTypeIndex, backLin
     );
 }
 
-const ChatSettingsContent = ({ idParam, dashboard, backLink }: { idParam: string, dashboard: Dashboard, backLink: string }) => {
+const ChatSettingsContent = ({ chatId, dashboard, backLink }: { chatId: string, dashboard: Dashboard, backLink: string }) => {
 
-    const chatId = chatIdFromIdValue(dashboard.profile.storageId, idParam);
     const { chat } = useChat({ chatId });
     const { participantsHavingReadAccessPending } = useParticipantsHavingReadAccess({ chatId });
     const dispatch = useAppDispatch();
@@ -101,7 +99,7 @@ const ChatSettingsPanel = ({ backLink }: { backLink: string }) => {
 
     return (
         <>
-            {dashboard && idParam && <ChatSettingsContent idParam={idParam} dashboard={dashboard} backLink={backLink} />}
+            {dashboard && idParam && <ChatSettingsContent chatId={idParam} dashboard={dashboard} backLink={backLink} />}
         </>
     );
 };

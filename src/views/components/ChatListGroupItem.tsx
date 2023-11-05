@@ -9,7 +9,6 @@ import { idValueFromChatId } from "../../store/solid/Chat";
 
 const ChatListGroupItem = ({ chatPath, chatId, children }: { chatPath: string, chatId: string, children?: ReactElement }) => {
     let { id: idParam } = useParams<string>();
-    const id = idValueFromChatId(chatId);
     const { chat } = useChat({ chatId });
     const { profileIdsToLoad } = useProfileIdsToLoad({ profileIds: chat ? chat.participants.map(p => p.id) : [] });
     const navigate = useNavigate();
@@ -17,7 +16,7 @@ const ChatListGroupItem = ({ chatPath, chatId, children }: { chatPath: string, c
     const refProfileIdsToLoad = useRef<boolean>(false);
 
     const handleClick = () => {
-        navigate(chatPath + '/' + id);
+        navigate(chatPath + '/' + idValueFromChatId(chatId));
     }
 
     useEffect(() => {
@@ -28,7 +27,7 @@ const ChatListGroupItem = ({ chatPath, chatId, children }: { chatPath: string, c
     }, [dispatch, profileIdsToLoad]);
 
     return (
-        <ListGroupItem action={true} onClick={handleClick} active={id === idParam}>
+        <ListGroupItem action={true} onClick={handleClick} active={chatId === idParam}>
             {children}
         </ListGroupItem>
     );
