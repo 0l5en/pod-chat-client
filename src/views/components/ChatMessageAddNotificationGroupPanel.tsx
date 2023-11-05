@@ -7,7 +7,6 @@ import { setInvitation } from "../../store/ChatInvitationSlice";
 import { useDashboard } from "../../store/DashboardHook";
 import { useProfile } from "../../store/ProfileHook";
 import { loadProfile } from "../../store/ProfileSlice";
-import { idValueFromChatId } from "../../store/solid/Chat";
 import { SolidNotification } from "../../types";
 import ProfileHeader from "./ProfileHeader";
 import WithTooltip from "./WithTooltip";
@@ -26,7 +25,7 @@ const ChatConversation = ({
     participantProfileImage?: string
 }) => {
     const navigate = useNavigate();
-    const navigatTo = chatPath + '/' + idValueFromChatId(meChatId);
+    const navigatTo = chatPath + '/' + encodeURIComponent(meChatId);
     return (
         <>
             <div className="d-flex align-items-center">

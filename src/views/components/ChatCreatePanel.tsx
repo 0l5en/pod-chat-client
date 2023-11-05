@@ -6,7 +6,6 @@ import { useChatCreate } from "../../store/ChatCreateHook";
 import { resetState } from "../../store/ChatCreateSlice";
 import { useDashboard } from "../../store/DashboardHook";
 import { addChat } from "../../store/DashboardSlice";
-import { idValueFromChatId } from "../../store/solid/Chat";
 import ChatCreateForm from "./ChatCreateForm";
 import IconWithBorder from "./IconWithBorder";
 import ScrollPanel from "./ScrollPanel";
@@ -29,7 +28,7 @@ const ChatCreatePanel = ({ chatPath }: { chatPath: string }) => {
                 dispatch(addChat(chatCreated));
             }
 
-            navigate(chatPath + '/' + idValueFromChatId(chatCreated.id));
+            navigate(chatPath + '/' + encodeURIComponent(chatCreated.id));
             dispatch(resetState());
         }
     }, [dispatch, chatCreated, chatPath, navigate]);

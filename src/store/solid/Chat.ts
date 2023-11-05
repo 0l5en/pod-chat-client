@@ -13,33 +13,6 @@ import {
 } from "./Constants";
 import rdfStore, { dateAsNumberFromQuadObject, extractObject, extractObjectLastValue, literalFromDate } from './RdfStore';
 
-/**
- * Extracts the id value from webid of chat. The webid
- * https://me.pod.provider/pod-chat/1234/index.ttl#this 
- * will produce '1234' as result.
- * @param chatId webid of chat
- * @returns the id value of the chat
- */
-export const idValueFromChatId = (chatId: string): string => {
-    // let chatUrl = new URL(chatId);
-    // let chatContainerPath = chatUrl.pathname.substring(0, chatUrl.pathname.lastIndexOf('/'));
-    // return chatContainerPath.substring(chatContainerPath.lastIndexOf('/') + 1);
-    return encodeURIComponent(chatId);
-};
-
-/**
- * Produces a webid for a chat from the given id value. The final URL will be prefixed with given storage value.
- * For examle if idValue is 1234 and storage is https://me.pod.provider/,
- * the final URL will be https://me.pod.provider/pod-chat/1234/index.ttl#this. 
- * @param storage the storage 
- * @param idValue the id value of the chat
- * @returns the webid of the chat
- */
-export const chatIdFromIdValue = (storage: string, idValue: string): string => {
-    // return storage + STORAGE_APP_BASE + idValue + '/' + STORAGE_LONG_CHAT_RESOURCE_NAME + '#' + STORAGE_LONG_CHAT_RESOURCE_FRAGMENT;
-    return decodeURIComponent(idValue);
-}
-
 export const loadChat = async (ownerId: string, chatId: string, force: boolean = false): Promise<Chat> => {
     const chatResourceUrl = removeHashFromUrl(chatId);
     await rdfStore.fetcher.load(chatResourceUrl, { force });

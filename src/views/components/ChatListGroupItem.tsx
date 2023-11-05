@@ -5,7 +5,6 @@ import { useAppDispatch } from "../../store";
 import { useChat } from "../../store/DashboardHook";
 import { useProfileIdsToLoad } from "../../store/ProfileHook";
 import { loadProfile } from "../../store/ProfileSlice";
-import { idValueFromChatId } from "../../store/solid/Chat";
 
 const ChatListGroupItem = ({ chatPath, chatId, children }: { chatPath: string, chatId: string, children?: ReactElement }) => {
     let { id: idParam } = useParams<string>();
@@ -16,7 +15,7 @@ const ChatListGroupItem = ({ chatPath, chatId, children }: { chatPath: string, c
     const refProfileIdsToLoad = useRef<boolean>(false);
 
     const handleClick = () => {
-        navigate(chatPath + '/' + idValueFromChatId(chatId));
+        navigate(chatPath + '/' + encodeURIComponent(chatId));
     }
 
     useEffect(() => {

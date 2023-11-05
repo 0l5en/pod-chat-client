@@ -7,7 +7,6 @@ import { useChatOfInviter } from "../../store/ChatInviterHook";
 import { createChatForInviter, declineChatForInviter, resetState } from "../../store/ChatInviterSlice";
 import { useDashboard } from "../../store/DashboardHook";
 import { addChat, resetInviter } from "../../store/DashboardSlice";
-import { idValueFromChatId } from "../../store/solid/Chat";
 import ChatParticipantList from "./ChatParticipantList";
 import IconWithBorder from "./IconWithBorder";
 import PendingSpinner from "./PendingSpinner";
@@ -51,7 +50,7 @@ const ChatInviterPanel = ({ chatPath, backLink }: { chatPath: string, backLink: 
             if (chatOfInviter.isNew) {
                 dispatch(addChat(chatOfInviter));
             }
-            navigate(chatPath + '/' + idValueFromChatId(chatOfInviter.id));
+            navigate(chatPath + '/' + encodeURIComponent(chatOfInviter.id));
             dispatch(resetInviter());
             dispatch(resetState());
         }
