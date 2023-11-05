@@ -1,13 +1,16 @@
 import { ACL, DCTERMS, ICAL, LDP, RDF } from "@inrupt/vocab-common-rdf";
-import { lit, quad, Statement } from "rdflib";
+import { Statement, lit, quad } from "rdflib";
 import * as uuid from "uuid";
 import { Chat, Participant } from "../../types";
 import {
-    currentContainerFromDoc, DC_ELEMENTS, FLOW,
-    PIM_MEETING, removeHashFromUrl, SOLID_TERMS,
+    DC_ELEMENTS, FLOW,
+    PIM_MEETING,
+    SOLID_TERMS,
     STORAGE_APP_BASE,
     STORAGE_LONG_CHAT_RESOURCE_FRAGMENT,
-    STORAGE_LONG_CHAT_RESOURCE_NAME
+    STORAGE_LONG_CHAT_RESOURCE_NAME,
+    currentContainerFromDoc,
+    removeHashFromUrl
 } from "./Constants";
 import rdfStore, { dateAsNumberFromQuadObject, extractObject, extractObjectLastValue, literalFromDate } from './RdfStore';
 

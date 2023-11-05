@@ -6,15 +6,35 @@ import { currentContainerFromDoc, FLOW, PODCHAT, removeHashFromUrl, SCHEMA, STOR
 import { buildMessageVerificationStr, verifyMessage } from "./Crypto";
 import rdfStore, { dateAsNumberFromQuadObject, extractObject, extractObjectLastValue, literalFromDateAsNumber } from "./RdfStore";
 
-export const sendMessageReply = async (chatId: string, messageId: string, name: string, agent: string): Promise<{ location: ChatMessageLocation; replyId: string, isAdd: boolean }> => {
+export const createMessage = (chatId: string, makerId: string, content: string, now: Date): ChatMessage => {
+    const resourceUrl = createChatMessagesResourceUrlForDate(chatId, now);
+    const messageId = generateMessageId();
+    const messageWebId = resourceUrl + '#' + messageId;
+
+    return { id: messageWebId, created: now.getTime(), maker: makerId, content, verificationStatus: "NOT_VERIFIED" };
+}
+
+export const createMessageReply = (chatId: string, messageId: string, agent: string, name: string): ChatMessageReply & { chatId: string } => {
     const location = locationFromMessageResourceUrl(removeHashFromUrl(messageId));
-    const resourceUrl = createChatMessageResourceForLocation(chatId, location);
+    const resourceUrl = createChatMessagesResourceUrlForLocation(chatId, location);
+    const replyId = resourceUrl + '#' + generateReplyId();
+    return { id: replyId, messageId, agent, name, chatId };
+};
+
+export const sendMessageReply = async ({ chatId, agent, messageId, name, id }: ChatMessageReply & { chatId: string }): Promise<{ location: ChatMessageLocation; replyId: string, isAdd: boolean }> => {
+    // validate chatId
+    rdfStore.cache.sym(chatId);
+
+    const agentNode = rdfStore.cache.sym(agent);
+    const targetNode = rdfStore.cache.sym(messageId);
+    const location = locationFromMessageResourceUrl(removeHashFromUrl(messageId));
+    const resourceUrl = createChatMessagesResourceUrlForLocation(chatId, location);
     const graph = rdfStore.cache.sym(resourceUrl);
 
     const firstMatch = rdfStore.cache.each(undefined, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(SCHEMA.ReactAction), graph)
         .filter(node => rdfStore.cache.holds(rdfStore.cache.sym(node.value), rdfStore.cache.sym(SCHEMA.name), literal(name), graph))
-        .filter(node => rdfStore.cache.holds(rdfStore.cache.sym(node.value), rdfStore.cache.sym(SCHEMA.agent), rdfStore.cache.sym(agent), graph))
-        .filter(node => rdfStore.cache.holds(rdfStore.cache.sym(node.value), rdfStore.cache.sym(SCHEMA.target), rdfStore.cache.sym(messageId), graph))
+        .filter(node => rdfStore.cache.holds(rdfStore.cache.sym(node.value), rdfStore.cache.sym(SCHEMA.agent), agentNode, graph))
+        .filter(node => rdfStore.cache.holds(rdfStore.cache.sym(node.value), rdfStore.cache.sym(SCHEMA.target), targetNode, graph))
         .pop();
 
     // remove reply 
@@ -27,38 +47,23 @@ export const sendMessageReply = async (chatId: string, messageId: string, name: 
 
     // add reply
     const ins: Statement[] = [];
-    const replyId = rdfStore.cache.sym(resourceUrl + '#' + generateReplyId());
+    const replyId = rdfStore.cache.sym(id);
     ins.push(quad(replyId, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(SCHEMA.ReactAction), graph));
     ins.push(quad(replyId, rdfStore.cache.sym(SCHEMA.name), literal(name), graph));
-    ins.push(quad(replyId, rdfStore.cache.sym(SCHEMA.agent), rdfStore.cache.sym(agent), graph));
-    ins.push(quad(replyId, rdfStore.cache.sym(SCHEMA.target), rdfStore.cache.sym(messageId), graph));
+    ins.push(quad(replyId, rdfStore.cache.sym(SCHEMA.agent), agentNode, graph));
+    ins.push(quad(replyId, rdfStore.cache.sym(SCHEMA.target), targetNode, graph));
     await rdfStore.updateManager.update([], ins);
 
     return { location, replyId: replyId.value, isAdd: true };
 }
 
-export const createMessage = (chatId: string, makerId: string, content: string, now: Date): ChatMessage => {
-    const resourceUrl = createChatMessagesResourceUrlForToday(chatId);
-    const messageId = generateMessageId();
-    const messageWebId = resourceUrl + '#' + messageId;
-
-    return { id: messageWebId, created: now.getTime(), maker: makerId, content, verificationStatus: "NOT_VERIFIED" };
-}
-
-
 export const sendMessage = async (chatId: string, message: ChatMessage, signature?: string): Promise<void> => {
     const resourceUrl = removeHashFromUrl(message.id);
     const ins: any[] = [];
-
-    try {
-        await rdfStore.fetcher.load(resourceUrl, { force: true });
-    } catch (error) {
-        // no message resource exist
-    }
-
     const graph = rdfStore.cache.sym(resourceUrl);
     const messageSubject = rdfStore.cache.sym(message.id);
 
+    // prepare inserts
     ins.push(quad(messageSubject, rdfStore.cache.sym(DCTERMS.created), literalFromDateAsNumber(message.created), graph));
     ins.push(quad(messageSubject, rdfStore.cache.sym(SIOC.content), literal(message.content), graph));
     ins.push(quad(messageSubject, rdfStore.cache.sym(FOAF.maker), rdfStore.cache.sym(message.maker), graph));
@@ -68,52 +73,59 @@ export const sendMessage = async (chatId: string, message: ChatMessage, signatur
 
     ins.push(quad(rdfStore.cache.sym(chatId), rdfStore.cache.sym(FLOW.message), messageSubject, graph));
 
+    // refresh the cache
+    try {
+        await rdfStore.fetcher.load(resourceUrl, { force: true });
+    } catch (error) {
+        // no message resource exist
+        // a new one is created by the updateManager
+    }
 
+    // write to pod
     await rdfStore.updateManager.update([], ins);
 }
 
 export const loadChatMessageResource = async (chatId: string, resourceUrl: string, force?: boolean): Promise<{ messages: ChatMessage[]; replies: ChatMessageReply[] }> => {
-    try {
-        if (force === true) {
-            rdfStore.cache.removeDocument(rdfStore.cache.sym(resourceUrl));
-        }
-        await rdfStore.fetcher.load(resourceUrl, { force });
 
-        // select messages from rdfStore
-        const messages = rdfStore.cache.each(rdfStore.cache.sym(chatId), rdfStore.cache.sym(FLOW.message), undefined, rdfStore.cache.sym(resourceUrl))
-            .reduce((acc, messageId) => {
-                const content = extractObjectLastValue(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(SIOC.content));
-                const created = extractObject(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(DCTERMS.created))
-                    .map(n => dateAsNumberFromQuadObject(n) || 0)
-                    .pop();
-                const maker = extractObjectLastValue(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(FOAF.maker));
-                if (content && created && maker) {
-                    const message: ChatMessage = { id: messageId.value, content, created, maker, verificationStatus: 'NOT_VERIFIED' };
-                    return [...acc, message];
-                }
-                return acc;
-            }, [] as Array<ChatMessage>);
+    const graph = rdfStore.cache.sym(resourceUrl);
+    const subject = rdfStore.cache.sym(chatId);
 
-        // select message replies from rdfStore
-        const replies = rdfStore.cache.each(undefined, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(SCHEMA.ReactAction), rdfStore.cache.sym(resourceUrl))
-            .reduce((acc, replyId) => {
-                const name = extractObjectLastValue(rdfStore, replyId.value, resourceUrl, rdfStore.cache.sym(SCHEMA.name));
-                const agent = extractObjectLastValue(rdfStore, replyId.value, resourceUrl, rdfStore.cache.sym(SCHEMA.agent));
-                const messageId = extractObjectLastValue(rdfStore, replyId.value, resourceUrl, rdfStore.cache.sym(SCHEMA.target));
-
-                if (name && agent && messageId) {
-                    return [...acc, { id: replyId.value, name, agent, messageId }]
-                }
-
-                return acc;
-            }, [] as Array<ChatMessageReply>);
-
-        return { messages, replies };
-    } catch (error) {
-        // TODO handle error
-        console.error('cannot load messages ', error);
+    // prepare the cache
+    if (force === true) {
+        rdfStore.cache.removeDocument(graph);
     }
-    return { messages: [], replies: [] };
+    await rdfStore.fetcher.load(resourceUrl, { force });
+
+    // select messages from cache
+    const messages = rdfStore.cache.each(subject, rdfStore.cache.sym(FLOW.message), undefined, graph)
+        .reduce((acc, messageId) => {
+            const content = extractObjectLastValue(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(SIOC.content));
+            const created = extractObject(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(DCTERMS.created))
+                .map(n => dateAsNumberFromQuadObject(n) || 0)
+                .pop();
+            const maker = extractObjectLastValue(rdfStore, messageId.value, resourceUrl, rdfStore.cache.sym(FOAF.maker));
+            if (content && created && maker) {
+                const message: ChatMessage = { id: messageId.value, content, created, maker, verificationStatus: 'NOT_VERIFIED' };
+                return [...acc, message];
+            }
+            return acc;
+        }, [] as Array<ChatMessage>);
+
+    // select message replies from cache
+    const replies = rdfStore.cache.each(undefined, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(SCHEMA.ReactAction), graph)
+        .reduce((acc, replyId) => {
+            const name = extractObjectLastValue(rdfStore, replyId.value, resourceUrl, rdfStore.cache.sym(SCHEMA.name));
+            const agent = extractObjectLastValue(rdfStore, replyId.value, resourceUrl, rdfStore.cache.sym(SCHEMA.agent));
+            const messageId = extractObjectLastValue(rdfStore, replyId.value, resourceUrl, rdfStore.cache.sym(SCHEMA.target));
+
+            if (name && agent && messageId) {
+                return [...acc, { id: replyId.value, name, agent, messageId }]
+            }
+
+            return acc;
+        }, [] as Array<ChatMessageReply>);
+
+    return { messages, replies };
 };
 
 export const loadMessagesForChats = async (chatIds: string[], location: ChatMessageLocation): Promise<ChatMessageSearchResult[]> => {
@@ -137,20 +149,6 @@ export const loadMessagesForChats = async (chatIds: string[], location: ChatMess
 
     return result;
 };
-
-export const createChatMessagesResourceUrlForToday = (chatId: string) => {
-    const resourceUrl = currentContainerFromDoc(removeHashFromUrl(chatId));
-    const now = new Date();
-    const year = now.getUTCFullYear();
-    const month = now.getUTCMonth() + 1;
-    const day = now.getUTCDate();
-    return resourceUrl + year + "/" + padMonthOrDay(month) + "/" + padMonthOrDay(day) + "/chat.ttl";
-};
-
-export const createChatMessageResourceForLocation = (chatId: string, location: ChatMessageLocation) => {
-    const resourceUrl = currentContainerFromDoc(removeHashFromUrl(chatId));
-    return resourceUrl + location.year + "/" + padMonthOrDay(location.month) + "/" + padMonthOrDay(location.day) + "/chat.ttl";
-}
 
 export const locationFromMessageResourceUrl = (messageResourceUrl: string): ChatMessageLocation => {
     const pathComponents = messageResourceUrl.split('/');
@@ -195,7 +193,7 @@ export const createChatMessageResource = (chatId: string, location: ChatMessageL
 export const verifyChatMessage = async (message: ChatMessage): Promise<ChatMessage> => {
     const w3idSignature = extractObjectLastValue(rdfStore, message.id, removeHashFromUrl(message.id), rdfStore.cache.sym(W3ID_SECURITY.proof));
     if (!w3idSignature) {
-        // Fallback for deprecated verification method that uses a native predicate for signature
+        // Fallback for deprecated verification method
         return await verifyPodchatSignature(message);
     }
     try {
@@ -207,7 +205,8 @@ export const verifyChatMessage = async (message: ChatMessage): Promise<ChatMessa
 };
 
 /*
- * Deprecated verification method that uses a native predicate for signature
+ * Deprecated verification method that uses a proprietary predicate 
+ * and fewer message attributes to verify the signature.
  */
 const verifyPodchatSignature = async (message: ChatMessage): Promise<ChatMessage> => {
     const podchatSignature = extractObjectLastValue(rdfStore, message.id, removeHashFromUrl(message.id), rdfStore.cache.sym(PODCHAT.signature));
@@ -220,6 +219,19 @@ const verifyPodchatSignature = async (message: ChatMessage): Promise<ChatMessage
     } catch (error) {
         return { ...message, verificationStatus: 'ERROR' };
     }
+}
+
+const createChatMessagesResourceUrlForDate = (chatId: string, date: Date) => {
+    const resourceUrl = currentContainerFromDoc(removeHashFromUrl(chatId));
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth() + 1;
+    const day = date.getUTCDate();
+    return resourceUrl + year + "/" + padMonthOrDay(month) + "/" + padMonthOrDay(day) + "/chat.ttl";
+};
+
+const createChatMessagesResourceUrlForLocation = (chatId: string, location: ChatMessageLocation) => {
+    const resourceUrl = currentContainerFromDoc(removeHashFromUrl(chatId));
+    return resourceUrl + location.year + "/" + padMonthOrDay(location.month) + "/" + padMonthOrDay(location.day) + "/chat.ttl";
 }
 
 const padMonthOrDay = (num: number) => {

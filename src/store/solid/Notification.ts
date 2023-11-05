@@ -1,6 +1,6 @@
 import { AS, DCTERMS, RDF } from "@inrupt/vocab-common-rdf";
 import { graph, quad, serialize, Statement } from "rdflib";
-import * as uuid from "uuid";
+import { v4 } from "uuid";
 import { SolidNotification } from "../../types";
 import { PODCHAT, STORAGE_APP_BASE, STORAGE_NOTIFICATIONS_CLEANUP_BATCH_SIZE, STORAGE_NOTIFICATIONS_PROCESSED } from "./Constants";
 import rdfStore, { compareDateLiteralNodes, literalFromDate } from "./RdfStore";
@@ -20,7 +20,7 @@ export const sendRemoveLongChatMessageReplyNotification = async (chatId: string,
 const sendNotification = async (rdfType: string, context: string, targetId: string, objectId: string, actorId: string, participationInbox: string, now: Date): Promise<void> => {
 
     const notificationIns: Array<any> = [];
-    const notificationSubj = rdfStore.cache.sym(participationInbox + uuid.v4() + ".ttl");
+    const notificationSubj = rdfStore.cache.sym(participationInbox + v4() + ".ttl");
 
     notificationIns.push(quad(notificationSubj, rdfStore.cache.sym(RDF.type), rdfStore.cache.sym(rdfType), notificationSubj));
     notificationIns.push(quad(notificationSubj, rdfStore.cache.sym(AS.context), rdfStore.cache.sym(context), notificationSubj));
@@ -41,7 +41,7 @@ const sendNotification = async (rdfType: string, context: string, targetId: stri
             contentType: "text/turtle"
         });
         if (!result.ok) {
-            throw new Error("cannot post data to external pod:" + docValue);
+            throw new Error("cannot post data to:" + docValue);
         }
     } else {
         throw new Error("cannot serialize notification");
@@ -58,11 +58,13 @@ export const acceptNotifications = async (notifications: SolidNotification[], pr
         const graph = rdfStore.cache.sym(notificationsProcessedResourceUrl);
         notifications.forEach(notification => {
             del.push(...rdfStore.cache.each(rdfStore.cache.sym(notification.id), rdfStore.cache.sym(DCTERMS.modified), undefined, graph)
-                .map(node => quad(rdfStore.cache.sym(notification.id), rdfStore.cache.sym(DCTERMS.modified), node, graph)));
+                .map(node =>
+                    quad(rdfStore.cache.sym(notification.id), rdfStore.cache.sym(DCTERMS.modified), node, graph)));
             ins.push(quad(rdfStore.cache.sym(notification.id), rdfStore.cache.sym(DCTERMS.modified), literalFromDate(now), graph));
         });
         await rdfStore.updateManager.update(del, ins);
     } catch (error) {
+        // silently ignore
         console.warn('cannot patch resource at ' + notificationsProcessedResourceUrl + ': ', error instanceof Error ? error.message : error + '');
     }
 }
