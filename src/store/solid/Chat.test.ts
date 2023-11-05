@@ -220,7 +220,7 @@ describe('Chat', () => {
         const expectedChatSubject = expectedGraph + '#this';
         const expectedTypeIndexSubject = testUrlAlice.privateTypeIndex + '#' + uuidMockValue;
         const expectedParticipationSubject = expectedGraph + '#' + uuidMockValue;
-        const now: Date = new Date('1995-12-17T03:24:00');
+        const now: Date = new Date('1995-12-17T02:24:00Z');
 
         let delStmtsChatCaptured: Statement<SubjectType, PredicateType, ObjectType, GraphType>[] = [];
         let insStmtsChatCaptured: Statement<SubjectType, PredicateType, ObjectType, GraphType>[] = [];
