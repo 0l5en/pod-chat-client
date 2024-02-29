@@ -93,9 +93,11 @@ export const loadChatMessageResource = async (chatId: string, resourceUrl: strin
     // prepare the cache
     if (force === true) {
         try {
-            rdfStore.cache.removeDocument(graph);
+            //rdfStore.cache.removeDocument(graph);
+            rdfStore.cache.removeMatches(null, null, null, graph);
         } catch (error) {
             // ignore silently
+            console.warn('cannot clear cache for ' + resourceUrl, error);
         }
     }
 
