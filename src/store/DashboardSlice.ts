@@ -153,7 +153,9 @@ export const selectError = (state: DashboardState) => state.asyncState.error;
 export const selectDashboard = (state: DashboardState) => state.dashboard;
 export const selectDashboardInviter = (state: DashboardState) => state.dashboard?.inviter;
 export const selectChatSearchFilter = (state: DashboardState) => state.chatSearchFilter;
-export const selectDashboardChats = (state: DashboardState) => state.dashboard ? state.dashboard.chats.filter(chat => state.chatSearchFilter ? chat.title.toLocaleLowerCase().startsWith(state.chatSearchFilter.toLocaleLowerCase()) : true).sort((c1, c2) => c2.created - c1.created) : [];
+export const selectDashboardChats = createSelector(
+    [selectDashboard, selectChatSearchFilter],
+    (dashboard, chatSearchFilter) => dashboard ? dashboard.chats.filter(chat => chatSearchFilter ? chat.title.toLocaleLowerCase().startsWith(chatSearchFilter.toLocaleLowerCase()) : true).sort((c1, c2) => c2.created - c1.created) : []);
 export const makeSelectDashboardChat = () => createSelector(
     [selectDashboard, selectChatId],
     (dashboard, chatId) => dashboard ? dashboard.chats.find(chat => chat.id === chatId) : undefined);
