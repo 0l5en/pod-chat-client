@@ -9,16 +9,14 @@ import { useChat, useDashboard } from "../../store/DashboardHook";
 import { acceptSolidNotifications, updateParticipantReferences } from "../../store/DashboardSlice";
 import { useProfileIdsToLoad } from "../../store/ProfileHook";
 import { loadProfile } from "../../store/ProfileSlice";
-import { chatIdFromIdValue } from "../../store/solid/Chat";
 import { Profile } from "../../types";
 import ChatMessageListPanel from "./ChatMessageListPanel";
 import ChatPanelHeader from "./ChatPanelHeader";
 import ScrollPanel from "./ScrollPanel";
 import WithTooltip from "./WithTooltip";
 
-const ChatPanelContent = ({ settingsPath, profile, idParam }: { settingsPath: string, profile: Profile, idParam: string }) => {
+const ChatPanelContent = ({ settingsPath, profile, chatId }: { settingsPath: string, profile: Profile, chatId: string }) => {
 
-    const chatId = chatIdFromIdValue(profile.storageId, idParam);
     const { dashboard } = useDashboard();
     const { chat, participantChatIds, chatNotificationsForReferenceId: notifications } = useChat({ chatId });
     const { profileIdsToLoad } = useProfileIdsToLoad({ profileIds: chat ? chat.participants.map(p => p.id) : [] });
@@ -86,7 +84,7 @@ const ChatPanel = ({ settingsPath }: { settingsPath: string }) => {
 
     return (
         <>
-            {dashboard && idParam && <ChatPanelContent profile={dashboard.profile} idParam={idParam} settingsPath={settingsPath} />}
+            {dashboard && idParam && <ChatPanelContent profile={dashboard.profile} chatId={idParam} settingsPath={settingsPath} />}
         </>
 
     );

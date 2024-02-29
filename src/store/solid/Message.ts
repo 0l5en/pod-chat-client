@@ -1,8 +1,8 @@
 import { DCTERMS, FOAF, LDP, RDF, SIOC } from "@inrupt/vocab-common-rdf";
-import { literal, quad, Statement } from "rdflib";
+import { Statement, literal, quad } from "rdflib";
 import { v4 } from "uuid";
 import { ChatMessage, ChatMessageLocation, ChatMessageReply, ChatMessageResource, ChatMessageSearchResult, locationComparator } from "../../types";
-import { currentContainerFromDoc, FLOW, PODCHAT, removeHashFromUrl, SCHEMA, STORAGE_LONG_CHAT_RESOURCE_NAME, W3ID_SECURITY } from "./Constants";
+import { FLOW, PODCHAT, SCHEMA, STORAGE_LONG_CHAT_RESOURCE_NAME, W3ID_SECURITY, currentContainerFromDoc, removeHashFromUrl } from "./Constants";
 import { buildMessageVerificationStr, verifyMessage } from "./Crypto";
 import rdfStore, { dateAsNumberFromQuadObject, extractObject, extractObjectLastValue, literalFromDateAsNumber } from "./RdfStore";
 
@@ -92,8 +92,13 @@ export const loadChatMessageResource = async (chatId: string, resourceUrl: strin
 
     // prepare the cache
     if (force === true) {
-        rdfStore.cache.removeDocument(graph);
+        try {
+            rdfStore.cache.removeDocument(graph);
+        } catch (error) {
+            // ignore silently
+        }
     }
+
     await rdfStore.fetcher.load(resourceUrl, { force });
 
     // select messages from cache

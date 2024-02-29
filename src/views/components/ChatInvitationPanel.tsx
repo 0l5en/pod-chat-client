@@ -7,7 +7,6 @@ import { useChatInvitation } from "../../store/ChatInvitationHook";
 import { joinChatOfInvitation, loadChatOfInvitation, resetState } from "../../store/ChatInvitationSlice";
 import { useDashboard, useNotifications } from "../../store/DashboardHook";
 import { acceptSolidNotifications, addChat } from "../../store/DashboardSlice";
-import { idValueFromChatId } from "../../store/solid/Chat";
 import ChatParticipantList from "./ChatParticipantList";
 import IconWithBorder from "./IconWithBorder";
 import PendingSpinner from "./PendingSpinner";
@@ -64,7 +63,7 @@ const ChatInvitationPanel = ({ chatPath, backLink }: { chatPath: string, backLin
                 dispatch(addChat(chatOfInvitation));
             }
 
-            navigate(chatPath + '/' + idValueFromChatId(chatOfInvitation.id));
+            navigate(chatPath + '/' + encodeURIComponent(chatOfInvitation.id));
             dispatch(resetState());
         }
     }, [dispatch, chatOfInvitation, chatPath, navigate]);

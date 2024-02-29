@@ -4,7 +4,7 @@ import { GraphType, ObjectType, PredicateType, SubjectType } from 'rdflib/lib/ty
 import * as uuid from "uuid";
 import { expect, Mock, vi } from 'vitest';
 import { prepareCache } from '../../testUtils';
-import { chatIdFromIdValue, createChat, deleteRecursive, idValueFromChatId, joinChat, loadChat, loadParticipantsHavingReadAccess, removeFromTypeIndex, setParticipantReferences, toggleParticipantHasReadAccess } from './Chat';
+import { createChat, deleteRecursive, joinChat, loadChat, loadParticipantsHavingReadAccess, removeFromTypeIndex, setParticipantReferences, toggleParticipantHasReadAccess } from './Chat';
 import { STORAGE_APP_BASE, STORAGE_LONG_CHAT_RESOURCE_NAME } from './Constants';
 import rdfStore from './RdfStore';
 
@@ -36,20 +36,6 @@ describe('Chat', () => {
     afterEach(() => {
         rdfStore.cache = graph();
         vi.restoreAllMocks();
-    });
-
-    describe('idValueFromChatId', () => {
-        it('should extract the id value from a given webid', () => {
-            const idValue = idValueFromChatId('https://me.pod.provider/pod-chat.com/1234/index.ttl#this');
-            expect(idValue).toBe('1234');
-        });
-    });
-
-    describe('chatIdFromIdValue', () => {
-        it('should produce a webid for a chat from the given id value', () => {
-            const webidOfChat = chatIdFromIdValue("https://me.pod.provider/", "1234");
-            expect(webidOfChat).toBe('https://me.pod.provider/pod-chat.com/1234/index.ttl#this');
-        });
     });
 
     describe('loadChat', () => {
