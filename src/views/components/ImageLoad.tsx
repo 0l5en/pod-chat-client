@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Image } from "react-bootstrap";
+import styled from 'styled-components';
 
 export interface ImageLoadProps {
     imageSrc: string
@@ -8,8 +9,13 @@ export interface ImageLoadProps {
 const ImageLoad = (props: ImageLoadProps) => {
     const [imageLoadError, setImageLoadError] = useState(false);
     return (
-        <>{!imageLoadError && <Image src={props.imageSrc} onError={() => setImageLoadError(true)} thumbnail={true} />}</>
+        <>{!imageLoadError && <StyledImage src={props.imageSrc} onError={() => setImageLoadError(true)} thumbnail={true} />}</>
     );
 }
 
 export default ImageLoad;
+
+export const StyledImage = styled(Image)`
+`
+
+// 26
