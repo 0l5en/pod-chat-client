@@ -1,14 +1,14 @@
-import { AnyAction, createAction, Dispatch, MiddlewareAPI } from "@reduxjs/toolkit";
+import { AnyAction, createAction, Dispatch, Middleware, MiddlewareAPI, UnknownAction } from "@reduxjs/toolkit";
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { AppState } from ".";
-import { AppMiddleware, ConnectActionPayload, Profile } from "../types";
+import { ConnectActionPayload, Profile } from "../types";
 import { setNotifications } from "./DashboardSlice";
 import { STORAGE_NOTIFICATIONS_CLEANUP_INTERVAL_MS } from "./solid/Constants";
 import { notificationsFromProfileInbox } from "./solid/Dashboard";
 import { cleanupNotifications } from "./solid/Notification";
 
 const processNextNotification = async (
-    dispatch: Dispatch<AnyAction>,
+    dispatch: Dispatch<UnknownAction>,
     profile: Profile,
     setNotificationProcessPending: (pending: boolean) => void,
     setStaleInboxData: (pending: boolean) => void,
@@ -30,7 +30,7 @@ const processNextNotification = async (
 }
 
 
-const solidNotificationMiddleware = (): AppMiddleware<AppState, AnyAction> => {
+const solidNotificationMiddleware = (): Middleware<{}, AppState> => {
     let socket: ReconnectingWebSocket | undefined = undefined;
     let notificationProcessPending: boolean = false;
     let staleInboxData: boolean = false;

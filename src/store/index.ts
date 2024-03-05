@@ -1,4 +1,4 @@
-import { AnyAction, combineReducers, configureStore } from '@reduxjs/toolkit';
+import { UnknownAction, combineReducers, configureStore } from '@reduxjs/toolkit';
 import { useDispatch } from 'react-redux';
 import chatCreateState from './ChatCreateSlice';
 import chatDeleteState from './ChatDeleteSlice';
@@ -35,7 +35,7 @@ const rootReducer = combineReducers({
 
 export type AppState = ReturnType<typeof rootReducer>;
 
-const appReducer = (state: AppState | undefined, dispatch: AnyAction) => {
+const appReducer = (state: AppState | undefined, dispatch: UnknownAction) => {
     if (dispatch.type === loggedOut.type) {
         state = undefined;
     }
