@@ -1,7 +1,6 @@
 import { ReactNode, useEffect, useMemo, useRef } from "react";
 import { Button, ListGroup, ListGroupItem } from "react-bootstrap";
 import { FaClock, FaExclamationCircle, FaExclamationTriangle, FaThumbsDown, FaThumbsUp } from "react-icons/fa";
-import styled from "styled-components";
 import { useAppDispatch } from "../../store";
 import { setMessageAnswer } from "../../store/ChatMessageAnswerSlice";
 import { useChatMessage } from "../../store/ChatMessageHook";
@@ -149,12 +148,12 @@ const MessagePanel = ({ chatId, message }: { chatId: string, message: ChatMessag
                     const urlStr = url.origin === window.location.origin ? url.pathname + url.search + url.hash : url.toString();
                     return (<>
                         {isAnswer
-                            ? <SyledContentLinkSmall key={key} variant="link" href={urlStr} target={targetStr} className="p-0 ms-1 no-shadow">
+                            ? <Button key={key} variant="link" href={urlStr} target={targetStr} className="p-0 ms-1 no-shadow" style={{ textDecoration: 'none', marginBottom: '6px' }}>
                                 <small>{urlStr}</small>
-                            </SyledContentLinkSmall>
-                            : <SyledContentLink key={key} variant="link" href={urlStr} target={targetStr} className="p-0 ms-1 no-shadow">
+                            </Button>
+                            : <Button key={key} variant="link" href={urlStr} target={targetStr} className="p-0 ms-1 no-shadow" style={{ textDecoration: 'none', marginBottom: '5px' }}>
                                 {urlStr}
-                            </SyledContentLink>}
+                            </Button>}
                     </>)
                 } catch (error) {
 
@@ -274,12 +273,3 @@ const ChatMessageListPanel = ({ chatId }: { chatId: string }) => {
 };
 
 export default ChatMessageListPanel;
-
-const SyledContentLink = styled(Button)`
-    text-decoration:none;
-    margin-bottom: 5px;
-`
-const SyledContentLinkSmall = styled(Button)`
-    text-decoration:none;
-    margin-bottom: 6px;
-`
