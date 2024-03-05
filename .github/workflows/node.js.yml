@@ -16,7 +16,6 @@ jobs:
 
     strategy:
       matrix:
-        # Do not work with Node 18.x yet
         node-version: [16.x, 18.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
