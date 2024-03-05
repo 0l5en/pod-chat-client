@@ -1,14 +1,13 @@
 import { EVENTS, getDefaultSession } from "@inrupt/solid-client-authn-browser";
-import { createAction } from "@reduxjs/toolkit";
+import { Middleware, createAction } from "@reduxjs/toolkit";
 import { AnyAction, Dispatch, MiddlewareAPI } from "redux";
 import { AppState } from ".";
-import AppMiddleware from "./AppMiddleware";
 import { loggedIn, loggedOut } from "./SolidAuthSlice";
 import { createSolidDownStreamDisconnectAction } from "./SolidNotificationMiddleware";
 
 export const trackSolidSession = createAction("solid/auth/trackSession");
 
-const solidAuthMiddleware = (): AppMiddleware<AppState, AnyAction> => {
+const solidAuthMiddleware = (): Middleware<{}, AppState> => {
 
     let trackSession = false;
 
