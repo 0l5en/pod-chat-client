@@ -96,7 +96,7 @@ export const loadChatMessageResource = async (chatId: string, resourceUrl: strin
             rdfStore.cache.removeMatches(null, null, null, graph);
         } catch (error) {
             // ignore silently
-            console.warn('cannot clear cache for ' + resourceUrl, error);
+            console.warn('cannot clear cache for %s', resourceUrl, error);
         }
     }
 
