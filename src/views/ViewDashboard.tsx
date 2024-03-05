@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { Button, Col, Fade, Form, InputGroup, ProgressBar, Row } from "react-bootstrap";
 import { FaPlus, FaTimes } from "react-icons/fa";
 import { Outlet, useNavigate } from "react-router-dom";
-import styled from "styled-components";
 import { useAppDispatch } from "../store";
 import { useDashboard } from "../store/DashboardHook";
 import { loadDashboard, setChatSearchFilter } from "../store/DashboardSlice";
@@ -19,9 +18,9 @@ const ChatSelectorFooter = ({ chatPath }: { chatPath: string }) => {
         <Row className="p-0 m-0 w-100">
             <Col className="p-0 pe-2" sm={6}>
                 <WithTooltip tooltipMessage='Start new chat'>
-                    <StyledButton className="m-2 shadow-none w-100" onClick={() => navigate(chatPath + '/new')}>
+                    <Button className="m-2 shadow-none w-100" onClick={() => navigate(chatPath + '/new')}>
                         <FaPlus className="mb-1" />
-                    </StyledButton>
+                    </Button>
                 </WithTooltip>
             </Col>
             <Col className="ps-0 pe-3">
@@ -87,7 +86,3 @@ const ViewDashboard = ({ chatPath, webid }: { chatPath: string, webid: string })
 }
 
 export default ViewDashboard;
-
-const StyledButton = styled(Button)`
-    
-`
