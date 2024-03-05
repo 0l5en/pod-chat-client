@@ -49,27 +49,24 @@ export const makeSelectLoadResultPending = () => createSelector(
 
 export const makeSelectMessageReplyGroups = () => createSelector(
     [selectMessageReplySelector, selectResults],
-    (replySelector, results) => {
-        const replySelectorLocation = locationFromMessageResourceUrl(removeHashFromUrl(replySelector.messageId));
-        return results
-            .filter(result => result.chatId === replySelector.chatId)
-            .flatMap(result => result.searchResults)
-            .flatMap(searchResult => searchResult.resources)
-            .filter(resource => locationComparator(resource.location, replySelectorLocation) === 0)
-            .flatMap(resource => resource.replies)
-            .filter(reply => reply.messageId === replySelector.messageId)
-            .reduce((acc, reply) => {
-                const found = acc.find(group => group.name === reply.name);
-                if (found) {
-                    if (!found.agents.includes(reply.agent)) {
-                        found.agents.push(reply.agent);
-                    }
-                    return acc;
+    (replySelector, results) => results
+        .filter(result => result.chatId === replySelector.chatId)
+        .flatMap(result => result.searchResults)
+        .flatMap(searchResult => searchResult.resources)
+        .filter(resource => locationComparator(resource.location, locationFromMessageResourceUrl(removeHashFromUrl(replySelector.messageId))) === 0)
+        .flatMap(resource => resource.replies)
+        .filter(reply => reply.messageId === replySelector.messageId)
+        .reduce((acc, reply) => {
+            const found = acc.find(group => group.name === reply.name);
+            if (found) {
+                if (!found.agents.includes(reply.agent)) {
+                    found.agents.push(reply.agent);
                 }
-                return [...acc, { name: reply.name, agents: [reply.agent] }];
-            }, [] as Array<ChatMessageReplyGroup>)
-            .sort((g1, g2) => g1.name.localeCompare(g2.name));
-    }
+                return acc;
+            }
+            return [...acc, { name: reply.name, agents: [reply.agent] }];
+        }, [] as Array<ChatMessageReplyGroup>)
+        .sort((g1, g2) => g1.name.localeCompare(g2.name))
 );
 
 export const makeSelectMessageResource = () => createSelector(

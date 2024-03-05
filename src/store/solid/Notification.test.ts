@@ -239,8 +239,10 @@ describe('Notification', () => {
         });
 
         it('should cleanup one chunk of notifications', async () => {
-            await prepareCache(createNotificationsProcessed(1), notificationsProcessedResource, rdfStore.cache);
             const fetcherLoadMock = rdfStore.fetcher.load as Mock<any[], any>;
+            fetcherLoadMock.mockImplementationOnce(async () => {
+                await prepareCache(createNotificationsProcessed(1), notificationsProcessedResource, rdfStore.cache);
+            });
             await cleanupNotifications("https://bob.pod/");
 
             expect(fetcherLoadMock).toBeCalledTimes(1);
@@ -253,9 +255,14 @@ describe('Notification', () => {
         });
 
         it('should cleanup two chunks of notifications', async () => {
-            await prepareCache(createNotificationsProcessed(STORAGE_NOTIFICATIONS_CLEANUP_BATCH_SIZE + 1), notificationsProcessedResource, rdfStore.cache);
+
             const fetcherLoadMock = rdfStore.fetcher.load as Mock<any[], any>;
             const updateManagerUpdateMock = rdfStore.updateManager.update as Mock<any[], any>;
+
+            fetcherLoadMock.mockImplementationOnce(async () => {
+                await prepareCache(createNotificationsProcessed(STORAGE_NOTIFICATIONS_CLEANUP_BATCH_SIZE + 1), notificationsProcessedResource, rdfStore.cache);
+            });
+
             await cleanupNotifications("https://bob.pod/");
 
             expect(fetcherLoadMock).toBeCalledTimes(1);

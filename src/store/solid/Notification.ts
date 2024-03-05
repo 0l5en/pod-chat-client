@@ -1,5 +1,5 @@
 import { AS, DCTERMS, RDF } from "@inrupt/vocab-common-rdf";
-import { graph, quad, serialize, Statement } from "rdflib";
+import { Statement, graph, quad, serialize } from "rdflib";
 import { v4 } from "uuid";
 import { SolidNotification } from "../../types";
 import { PODCHAT, STORAGE_APP_BASE, STORAGE_NOTIFICATIONS_CLEANUP_BATCH_SIZE, STORAGE_NOTIFICATIONS_PROCESSED } from "./Constants";
@@ -72,6 +72,14 @@ export const acceptNotifications = async (notifications: SolidNotification[], pr
 export const cleanupNotifications = async (profileStorageId: string): Promise<void> => {
     try {
         const notificationsProcessedResourceUrl = profileStorageId + STORAGE_APP_BASE + STORAGE_NOTIFICATIONS_PROCESSED;
+
+        try {
+            rdfStore.cache.removeMatches(null, null, null, rdfStore.cache.sym(notificationsProcessedResourceUrl));
+        } catch (error) {
+            // ignore silently
+            console.warn('cannot clear cache for ' + notificationsProcessedResourceUrl, error);
+        }
+
         await rdfStore.fetcher.load(notificationsProcessedResourceUrl, { force: true });
 
         // select all distinct processed notification statements ordered by modified descending
