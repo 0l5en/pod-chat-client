@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { FaPlus } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { createSearchParams, useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../store";
 import { useChatCreate } from "../../store/ChatCreateHook";
 import { resetState } from "../../store/ChatCreateSlice";
@@ -27,8 +27,7 @@ const ChatCreatePanel = ({ chatPath }: { chatPath: string }) => {
             if (chatCreated.isNew) {
                 dispatch(addChat(chatCreated));
             }
-
-            navigate(chatPath + '/' + encodeURIComponent(chatCreated.id));
+            navigate({ pathname: chatPath, search: `?${createSearchParams({ chatId: chatCreated.id })}` });
             dispatch(resetState());
         }
     }, [dispatch, chatCreated, chatPath, navigate]);

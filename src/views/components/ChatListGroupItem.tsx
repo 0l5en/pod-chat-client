@@ -1,6 +1,6 @@
 import { ReactElement, useEffect, useRef } from "react";
 import { ListGroupItem } from "react-bootstrap";
-import { useNavigate, useParams } from "react-router-dom";
+import { createSearchParams, useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch } from "../../store";
 import { useChat } from "../../store/DashboardHook";
 import { useProfileIdsToLoad } from "../../store/ProfileHook";
@@ -15,7 +15,7 @@ const ChatListGroupItem = ({ chatPath, chatId, children }: { chatPath: string, c
     const refProfileIdsToLoad = useRef<boolean>(false);
 
     const handleClick = () => {
-        navigate(chatPath + '/' + encodeURIComponent(chatId));
+        navigate({ pathname: chatPath, search: `?${createSearchParams({ chatId })}` });
     }
 
     useEffect(() => {

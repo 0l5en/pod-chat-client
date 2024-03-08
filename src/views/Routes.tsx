@@ -1,4 +1,10 @@
 import { RouteObject, useRoutes } from 'react-router-dom';
+import ViewHelp from './ViewHelp';
+import ViewImprint from './ViewImprint';
+import ViewMain from './ViewMain';
+import ViewNotificationList from './ViewNotificationList';
+import ViewRegister from './ViewRegister';
+import ViewTC from './ViewTC';
 import ChatCreatePanel from './components/ChatCreatePanel';
 import ChatInvitationPanel from './components/ChatInvitationPanel';
 import ChatInviterPanel from './components/ChatInviterPanel';
@@ -6,12 +12,6 @@ import ChatOutlet from './components/ChatOutlet';
 import ChatPanel from './components/ChatPanel';
 import ChatSettingsPanel from './components/ChatSettingsPanel';
 import Layout from './components/Layout';
-import ViewHelp from './ViewHelp';
-import ViewImprint from './ViewImprint';
-import ViewMain from './ViewMain';
-import ViewNotificationList from './ViewNotificationList';
-import ViewRegister from './ViewRegister';
-import ViewTC from './ViewTC';
 
 const routes: RouteObject[] = [{
     path: '/',
@@ -42,7 +42,7 @@ const routes: RouteObject[] = [{
                     element: <ChatInviterPanel chatPath='../chat' backLink='..' />
                 },
                 {
-                    path: 'chat/:id',
+                    path: 'chat',
                     element: <ChatOutlet />,
                     children: [
                         {

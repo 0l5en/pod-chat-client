@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Button, ListGroup, ListGroupItem } from "react-bootstrap";
 import { FaArrowLeft, FaTrash } from "react-icons/fa";
-import { useNavigate, useParams } from "react-router-dom";
+import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch } from "../../store";
 import { useChatDelete } from "../../store/ChatDeleteHook";
 import { chatDeleteSubmit, resetState } from "../../store/ChatDeleteSlice";
@@ -40,9 +40,10 @@ const ChatSettingsFooter = ({ chatId, privateTypeIndex, publicTypeIndex, backLin
 
     return (
         <div className="d-flex justify-content-between w-100">
-            <WithTooltip tooltipMessage="Back to chat"><Button className="schadow-none m-2" onClick={() => navigate(backLink)} disabled={pending}>
-                <FaArrowLeft className="mb-1" />
-            </Button>
+            <WithTooltip tooltipMessage="Back to chat">
+                <Button className="schadow-none m-2" onClick={() => navigate({ pathname: backLink, search: `?${createSearchParams({ chatId })}` })} disabled={pending}>
+                    <FaArrowLeft className="mb-1" />
+                </Button>
             </WithTooltip>
             <WithTooltip tooltipMessage="Delete chat">
                 <Button variant="danger" className="shadow-none m-2" onClick={() => dispatch(chatDeleteSubmit({ chatId, privateTypeIndex, publicTypeIndex }))} disabled={pending}>
@@ -94,12 +95,13 @@ const ChatSettingsContent = ({ chatId, dashboard, backLink }: { chatId: string, 
 
 const ChatSettingsPanel = ({ backLink }: { backLink: string }) => {
 
-    const { id: idParam } = useParams<string>();
+    const [searchParams] = useSearchParams();
     const { dashboard } = useDashboard();
+    const chatId = searchParams.get('chatId');
 
     return (
         <>
-            {dashboard && idParam && <ChatSettingsContent chatId={idParam} dashboard={dashboard} backLink={backLink} />}
+            {dashboard && chatId && <ChatSettingsContent chatId={chatId} dashboard={dashboard} backLink={backLink} />}
         </>
     );
 };

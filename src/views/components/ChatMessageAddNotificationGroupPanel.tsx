@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Button } from "react-bootstrap";
 import { FaComments, FaPlus } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { createSearchParams, useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../store";
 import { setInvitation } from "../../store/ChatInvitationSlice";
 import { useDashboard } from "../../store/DashboardHook";
@@ -25,7 +25,6 @@ const ChatConversation = ({
     participantProfileImage?: string
 }) => {
     const navigate = useNavigate();
-    const navigatTo = chatPath + '/' + encodeURIComponent(meChatId);
     return (
         <>
             <div className="d-flex align-items-center">
@@ -33,7 +32,9 @@ const ChatConversation = ({
                 <span className="ms-1">has sent {groupCount} Message{groupCount > 1 && 's'}</span>
             </div>
             <div>
-                <Button onClick={() => navigate(navigatTo)}><FaComments className="mb-1" /></Button>
+                <Button onClick={() => navigate({ pathname: chatPath, search: `?${createSearchParams({ chatId: meChatId })}` })}>
+                    <FaComments className="mb-1" />
+                </Button>
             </div>
         </>
     );

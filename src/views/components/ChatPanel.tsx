@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { Button } from "react-bootstrap";
 import { FaCog } from "react-icons/fa";
-import { useNavigate, useParams } from "react-router-dom";
+import { createSearchParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useAppDispatch } from "../../store";
 import { useChatMessage } from "../../store/ChatMessageHook";
 import { completeChatMessageAddNotifications, loadNextResult } from "../../store/ChatMessageSlice";
@@ -68,7 +68,13 @@ const ChatPanelContent = ({ settingsPath, profile, chatId }: { settingsPath: str
             {chat && (
                 <ScrollPanel
                     header={<ChatPanelHeader profile={profile} chat={chat} />}
-                    footer={<WithTooltip tooltipMessage="Settings"><Button className="shadow-none m-2" onClick={() => navigate(settingsPath)}><FaCog className="mb-1" /></Button></WithTooltip>}>
+                    footer={
+                        <WithTooltip tooltipMessage="Settings">
+                            <Button className="shadow-none m-2" onClick={() => navigate({ pathname: settingsPath, search: `?${createSearchParams({ chatId: chat.id })}` })}>
+                                <FaCog className="mb-1" />
+                            </Button>
+                        </WithTooltip>
+                    }>
                     <ChatMessageListPanel chatId={chat.id} />
                 </ScrollPanel>
             )}
@@ -79,12 +85,13 @@ const ChatPanelContent = ({ settingsPath, profile, chatId }: { settingsPath: str
 
 const ChatPanel = ({ settingsPath }: { settingsPath: string }) => {
 
-    const { id: idParam } = useParams<string>();
+    const [searchParams] = useSearchParams();
     const { dashboard } = useDashboard();
+    const chatId = searchParams.get('chatId');
 
     return (
         <>
-            {dashboard && idParam && <ChatPanelContent profile={dashboard.profile} chatId={idParam} settingsPath={settingsPath} />}
+            {dashboard && chatId && <ChatPanelContent profile={dashboard.profile} chatId={chatId} settingsPath={settingsPath} />}
         </>
 
     );
