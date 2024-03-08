@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Button } from "react-bootstrap";
 import { FaPlus } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { createSearchParams, useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../../store";
 import { useChatOfInviter } from "../../store/ChatInviterHook";
 import { createChatForInviter, declineChatForInviter, resetState } from "../../store/ChatInviterSlice";
@@ -50,7 +50,7 @@ const ChatInviterPanel = ({ chatPath, backLink }: { chatPath: string, backLink: 
             if (chatOfInviter.isNew) {
                 dispatch(addChat(chatOfInviter));
             }
-            navigate(chatPath + '/' + encodeURIComponent(chatOfInviter.id));
+            navigate({ pathname: chatPath, search: `?${createSearchParams({ chatId: chatOfInviter.id })}` });
             dispatch(resetInviter());
             dispatch(resetState());
         }
